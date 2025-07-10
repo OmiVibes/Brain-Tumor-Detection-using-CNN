@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Tumor Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+    
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: url('https://example.com/your-background-image.jpg') no-repeat center center fixed; /* Add your background image URL */
+            background-size: cover; /* Ensure the background covers the entire area */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+    
+        /* Container */
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            max-width: 1000px;
+            width: 90%;
+            margin: 20px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.9); /* Slightly transparent white for better readability */
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+        }
+    
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+    
+        header::after {
+            content: "";
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            margin: 20px auto;
+            border-radius: 2px;
+        }
+    
+        h1 {
+            font-size: 42px;
+            color: #222;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+    
+        .sub-heading {
+            font-size: 18px;
+            color: #7f8c8d;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+    
+        /* Info Cards */
+        .info-cards {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 30px 0;
+        }
+    
+        .info-card {
+            flex: 1;
+            min-width: 250px;
+            background: #fff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-top: 4px solid #3498db;
+        }
+    
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+    
+        .info-card i {
+            font-size: 32px;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+    
+        .info-card h3 {
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+    
+        .info-card p {
+            color: #7f8c8d;
+            font-size: 15px;
+        }
+    
+        /* Form Container */
+        .form-container {
+            background: #fdfdfd;
+            padding: 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+            border: 1px solid #e0e0e0;
+        }
+    
+        .form-container h3 {
+            font-family: 'Poppins', sans-serif;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+    
+        .form-container:hover {
+            transform: translateY(-5px);
+        }
+    
+        /* File Upload */
+        .file-input {
+            position: relative;
+            margin-bottom: 15px;
+        }
+    
+        .file-input input[type="file"] {
+            font-size: 16px;
+            padding: 15px;
+            width: 100%;
+            border: 2px dashed #2980b9;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+    
+        .file-input input[type="file"]:hover {
+            border-color: #1b6699;
+            background-color: #f0f7fc;
+        }
+    
+        .file-input::before {
+            content: "Choose MRI Scan or Drag & Drop";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+    
+        .file-input input[type="file"]:valid::before {
+            content: ""; /* Clear the content when a file is selected */
+        }
+    
+        /* Button */
+        button {
+            font-size: 18px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #3498db, #6ab0de);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            margin-top: 15px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+    
+        button:hover {
+            background: linear-gradient(135deg, #2980b9, #5a99c2);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(41, 128, 185, 0.3);
+        }
+    
+        button i {
+            font-size: 18px;
+        }
+    
+        /* Prediction Result */
+        .prediction-container {
+            margin-top: 30px;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease-in-out;
+            border: 1px solid #e0e0e0;
+        }
+    
+        .prediction-container h3 {
+            font-family: 'Poppins', sans-serif;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+    
+        .prediction-container:hover {
+            transform: translateY(-5px);
+        }
+    
+        .result {
+            font-size: 22px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            display: inline-block;
+        }
+    
+        /* Image Styling */
+        .image-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 25px 0;
+        }
+    
+        .image-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+    
+        .image-container img {
+            width: 100%;
+            display: block;
+            transition: transform 0.3s ease-in-out;
+        }
+    
+        .image-container img:hover {
+            transform: scale(1.03);
+        }
+    
+        /* Grad-CAM Title Spacing */
+        .gradcam-title {
+            margin-top: 30px;
+            color: #2c3e50;
+            font-family: 'Poppins', sans-serif;
+        }
+    
+        /* Download & Full Size Buttons */
+        .image-buttons {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+        }
+    
+        .image-buttons a {
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            opacity: 0.9;
+        }
+    
+        .image-buttons a:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+    
+        .btn-download {
+            background: #27ae60;
+        }
+    
+        .btn-download:hover {
+            background: #219150;
+            box-shadow: 0 3px 10px rgba(39, 174, 96, 0.3);
+        }
+    
+        .btn-view {
+            background: #c0392b;
+        }
+    
+        .btn-view:hover {
+            background: #a93226;
+            box-shadow: 0 3px 10px rgba(192, 57, 43, 0.3);
+        }
+    
+        /* Model Info Section */
+        .model-info {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            width: 100%;
+            border-left: 4px solid #3498db;
+        }
+    
+        .model-info h3 {
+            font-family: 'Poppins', sans-serif;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+    
+        .model-info p {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.7;
+        }
+    
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    
+        .tech-item {
+            background: #e0e9f5;
+            color: #2c3e50;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+    
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #2c3e50, #1a252f);
+            color: #ecf0f1;
+            text-align: center;
+            padding: 25px 0;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 40px;
+        }
+    
+        footer p {
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 10px;
+        }
+    
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+    
+        .social-links a {
+            color: #ecf0f1;
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+    
+        .social-links a:hover {
+            transform: translateY(-3px);
+            color: #3498db;
+        }
+    
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 32px;
+            }
+            
+            .info-cards {
+                flex-direction: column;
+            }
+            
+            .form-container, .prediction-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Brain Tumor Detection System</h1>
+            <p class="sub-heading">Upload an MRI scan to detect brain tumors using our advanced AI-powered deep learning model with 98.7% accuracy.</p>
+        </header>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <i class="fas fa-brain"></i>
+                <h3>Why Early Detection?</h3>
+                <p>Early detection of brain tumors can significantly improve treatment outcomes and survival rates. Our system helps identify potential tumors at their earliest stages.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-robot"></i>
+                <h3>AI Technology</h3>
+                <p>Powered by a custom CNN model trained on thousands of MRI scans, our system provides accurate and rapid tumor detection.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-shield-alt"></i>
+                <h3>Privacy Focused</h3>
+                <p>Your medical data remains confidential. All processing happens securely and images are deleted after analysis unless you choose to save them.</p>
+            </div>
+        </div>
+
+        <div class="model-info">
+            <h3>About Our Model</h3>
+            <p>Our deep learning model was trained on a comprehensive dataset of over 3600 MRI scans, achieving state-of-the-art performance in tumor detection and classification. The system can identify various tumor types including glioma, meningioma, and pituitary tumors.</p>
+            <p>The model uses advanced techniques including transfer learning and data augmentation to ensure robust performance across different MRI machines and imaging conditions.</p>
+            <div class="tech-stack">
+                <span class="tech-item">Keras</span>
+                <span class="tech-item">Python</span>
+                <span class="tech-item">OpenCV</span>
+                <span class="tech-item">Grad-CAM</span>
+                <span class="tech-item">Flask</span>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <h3>Upload MRI Scan</h3>
+            <form action="/" method="post" enctype="multipart/form-data" id="upload-form">
+                <div class="file-input">
+                    <input type="file" name="file" accept="image/*" required>
+                </div>
+                <button type="submit"><i class="fas fa-search"></i> Analyze Scan</button>
+            </form>
+        </div>
+
+        {% if result %}
+            <div class="prediction-container">
+                <h3>Analysis Results</h3>
+                <div class="result-card">
+                    <p class="result">Prediction: <strong>{{ result }}</strong></p>
+
+                    <div class="image-wrapper">
+                        <div class="image-container">
+                            <img src="{{ image_path }}" alt="Uploaded MRI">
+                            <div class="image-buttons">
+                                <a href="{{ image_path }}" download class="btn-download"><i class="fas fa-download"></i> Download</a>
+                                <a href="{{ image_path }}" target="_blank" class="btn-view"><i class="fas fa-expand"></i> Full Size</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if gradcam_path %}
+                        <h3 class="gradcam-title">GradCam Visualization</h3>
+                        <p>This heatmap shows the areas that most influenced the AI's decision, helping medical professionals understand the model's focus.</p>
+                        <div class="image-wrapper">
+                            <div class="image-container">
+                                <img src="{{ gradcam_path }}" alt="Grad-CAM Heatmap">
+                                <div class="image-buttons">
+                                    <a href="{{ gradcam_path }}" download class="btn-download"><i class="fas fa-download"></i> Download</a>
+                                    <a href="{{ gradcam_path }}" target="_blank" class="btn-view"><i class="fas fa-expand"></i> Full Size</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Brain Tumor Detection System | Developed by AI Enthusiasts</p>
+        <p>For research and educational purposes only. Not for clinical use.</p>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-linkedin"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fas fa-envelope"></i></a>
+        </div>
+    </footer>
+</body>
+</html>

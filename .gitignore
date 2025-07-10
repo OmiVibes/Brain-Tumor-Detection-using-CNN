@@ -1,0 +1,17 @@
+# Ignore dataset folder
+dataset/
+data/
+
+# Ignore large model files (if needed)
+*.h5
+*.npy
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Ignore VS Code or IDE config
+.vscode/
