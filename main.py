@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing import image
 from flask import Flask, request, render_template
 import grad_cam  # Import updated Grad-CAM script
 from tensorflow.keras.applications import MobileNetV2
-
+# SYNC TEST (added on purpose)
 # Initialize Flask app
 app = Flask(__name__)
 
