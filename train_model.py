@@ -7,6 +7,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.utils.class_weight import compute_class_weight
 
+#File is used to train the model
 # Define dataset paths
 dataset_path = "dataset"
 train_path = os.path.join(dataset_path, "train")
