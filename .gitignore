@@ -1,5 +1,19 @@
 __pycache__/
 *.py[cod]
+PROJECT_CONTEXT.txt
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.venv/
+venv/
+env/
+
+.idea/
+.vscode/
+
+.env
 
 dataset/
 models/*.h5

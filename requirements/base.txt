@@ -1,0 +1,7 @@
+# Phase 1A base dependencies.
+# The original legacy environment versions were not preserved, so these are
+# reasonable compatible constraints for the current foundation work.
+
+Flask>=3.1,<4.0
+numpy>=1.26,<3.0
+PyYAML>=6.0,<7.0

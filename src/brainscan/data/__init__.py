@@ -1,0 +1,17 @@
+"""Dataset constants and metadata for BrainScanAI."""
+
+from .constants import (
+    CANONICAL_CLASS_NAMES,
+    CANONICAL_CLASS_TO_ID,
+    DATASET_FOLDER_TO_CANONICAL,
+    DATASET_FOLDER_TO_ID,
+    ID_TO_CANONICAL_CLASS,
+)
+
+__all__ = [
+    "CANONICAL_CLASS_NAMES",
+    "CANONICAL_CLASS_TO_ID",
+    "DATASET_FOLDER_TO_CANONICAL",
+    "DATASET_FOLDER_TO_ID",
+    "ID_TO_CANONICAL_CLASS",
+]

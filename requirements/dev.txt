@@ -1,0 +1,3 @@
+# Phase 1A development/test dependencies
+
+pytest>=8.0,<9.0

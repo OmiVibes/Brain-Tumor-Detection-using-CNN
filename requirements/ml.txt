@@ -1,0 +1,9 @@
+# Legacy / ML-oriented dependencies.
+# Exact historical versions were unavailable from the original project.
+# TensorFlow compatibility may need adjustment depending on Python/platform.
+
+tensorflow>=2.16,<2.21
+opencv-python>=4.10,<5.0
+matplotlib>=3.8,<4.0
+seaborn>=0.13,<0.14
+scikit-learn>=1.5,<2.0

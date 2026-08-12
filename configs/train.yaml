@@ -1,0 +1,27 @@
+training:
+  seed: 42
+  image_size: [150, 150]
+  batch_size: 32
+  epochs: 20
+  learning_rate: 0.001
+  num_workers: 0
+
+dataset:
+  root: dataset
+  train_dir: dataset/train
+  test_dir: dataset/test
+  physical_class_folders:
+    - glioma
+    - meningioma
+    - notumor
+    - pituitary
+  canonical_class_names:
+    - glioma
+    - meningioma
+    - pituitary
+    - no_tumor
+
+model:
+  architecture: legacy_cnn_baseline
+  num_classes: 4
+  pretrained: false

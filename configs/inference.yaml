@@ -1,0 +1,21 @@
+dataset:
+  root: dataset
+  canonical_class_names:
+    - glioma
+    - meningioma
+    - pituitary
+    - no_tumor
+
+model:
+  architecture: legacy_cnn_baseline
+  num_classes: 4
+  pretrained: false
+
+inference:
+  model_artifact_path: models/tumor_classification.h5
+  image_size: [150, 150]
+  class_mapping:
+    glioma: 0
+    meningioma: 1
+    pituitary: 2
+    no_tumor: 3
