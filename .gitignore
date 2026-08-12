@@ -21,3 +21,4 @@ models/*.h5
 static/uploads/
 static/gradcam/
 Matrix/
+artifacts/data_inspection/

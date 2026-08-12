@@ -1,56 +1,60 @@
 # BrainScanAI 2.0
 
-BrainScanAI 2.0 is the planned upgrade path for a legacy student brain MRI tumor classification project into a cleaner, reproducible, interview-ready research prototype.
+BrainScanAI 2.0 is the upgrade path for a legacy student brain MRI tumor classification project into a cleaner, reproducible, interview-ready research prototype.
 
 ## Purpose
 
 The long-term goal of this repository is to evolve from a basic Flask + CNN demo into a better engineered brain MRI analysis system with:
 
-- reproducible training and evaluation
+- reproducible data, training, and evaluation foundations
 - clearer project structure
 - valid explainability
 - stronger documentation
 - safer engineering defaults
 
-Phase 1A does **not** implement the full upgraded system. It establishes the repository foundation needed for later migration work.
+The repository is being upgraded in bounded phases rather than rewritten all at once.
 
 ## Legacy Background
 
-This repository started as a college project for brain tumor classification from MRI images using TensorFlow/Keras and a Flask upload UI. The original implementation already includes:
+This repository started as a college project for brain tumor classification from MRI images using TensorFlow/Keras and a Flask upload UI. The legacy implementation already includes:
 
-- MRI image upload through Flask
-- saved Keras models
-- tumor detection and classification scripts
-- evaluation plotting
+- MRI upload through Flask
+- saved Keras `.h5` models
+- training and evaluation scripts
 - Grad-CAM-style visualization
+- legacy dataset folders under `dataset/`
 
-The legacy code is preserved and documented in [docs/legacy_system.md](docs/legacy_system.md). The exact preserved legacy snapshot is tagged in Git as `legacy-v1`.
+The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy_system.md), and the exact preserved Git snapshot is tagged as `legacy-v1`.
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 1A - repository foundation and reproducibility setup**
+Current milestone: **Phase 1C - manifest-backed PyTorch data pipeline**
 
-What Phase 1A adds:
+What is implemented through Phase 1C:
 
-- professional repository documentation
-- dependency and environment scaffolding
-- initial YAML configuration files
-- minimal `src/brainscan` package structure
-- canonical four-class mapping
-- lightweight configuration loader
-- initial unit tests
+- environment and dependency scaffolding
+- central canonical class mapping
+- YAML configuration loading
+- deterministic dataset audit outputs
+- deterministic train/validation/test manifest files
+- manifest-backed PyTorch dataset and dataloader utilities
+- centralized preprocessing transforms
+- reproducibility helpers for seeded loading
+- unit tests for config, data audit, manifests, dataset loading, preprocessing, loaders, and reproducibility
 
-What Phase 1A does **not** change yet:
+What is intentionally **not** implemented yet:
 
-- legacy ML architecture
-- saved legacy models
-- legacy dataset placement
-- legacy Flask app behavior
-- legacy training script behavior
+- model training
+- ResNet18 or any other classifier architecture
+- loss/optimizer logic
+- Grad-CAM v2
+- evaluation metrics for a new model
+- FastAPI
+- React frontend
+- segmentation
+- uncertainty estimation
 
 ## Current Supported Functionality
-
-Today, the repository contains two layers of functionality:
 
 ### Legacy functionality
 
@@ -60,23 +64,26 @@ Today, the repository contains two layers of functionality:
 - `multi_stage_classification.py` legacy inference helper
 - `grad_cam.py` legacy Grad-CAM utility
 
-### New Phase 1A foundation
+### BrainScanAI foundation currently available
 
-- central class mapping in `src/brainscan/data/constants.py`
-- YAML config loading in `src/brainscan/core/config.py`
-- initial `configs/` files
-- initial tests under `tests/unit/`
+- canonical class mapping in `src/brainscan/data/constants.py`
+- config loading in `src/brainscan/core/config.py`
+- reproducibility helpers in `src/brainscan/core/reproducibility.py`
+- dataset audit and split generation scripts
+- manifest-backed PyTorch dataset and dataloader utilities
+- train/eval preprocessing builders
+- inspection script for real MRI dataloaders
 
 ## Current Limitations
 
 The repository is still in transition. Important limitations remain:
 
-- legacy two-stage classification logic has not been replaced yet
-- legacy Grad-CAM is still scientifically invalid for the real prediction model
-- reproducible train/validation/test manifests have not been built yet
-- legacy environment versions were not recorded originally
-- no new classifier training pipeline exists yet
-- no FastAPI, database, segmentation, DICOM, or frontend rebuild has started
+- the legacy two-stage TensorFlow pipeline still exists unchanged
+- the legacy Grad-CAM wiring is still scientifically invalid
+- no new model has been trained yet
+- subject-level leakage cannot be ruled out from the available dataset filenames
+- dataset provenance/license/citation could not be established from the repository contents
+- no API, database, deployment, or product workflow exists yet
 
 ## Research / Educational Disclaimer
 
@@ -86,29 +93,29 @@ It is **not** a medical device, not clinically validated, and not intended to re
 
 ## Repository Structure
 
-Current important paths:
-
 ```text
 .
-├── configs/                  # Phase 1A configuration files
-├── docs/                     # legacy system preservation docs
-├── requirements/             # dependency group files
-├── src/brainscan/            # new package foundation
-├── templates/                # legacy Flask template
-├── tests/unit/               # Phase 1A unit tests
-├── dataset/                  # legacy MRI image dataset (kept in place)
-├── models/                   # legacy model binaries (kept in place)
-├── static/                   # legacy uploads and Grad-CAM outputs
-├── main.py                   # legacy Flask app
-├── train_model.py            # legacy training script
-├── test.py                   # legacy evaluation script
-├── UPGRADE_PLAN.md           # source-of-truth roadmap
-└── docs/legacy_system.md     # preserved legacy architecture audit
+├── artifacts/data_audit/        # dataset audit outputs
+├── configs/                     # project configuration
+├── data/splits/                 # deterministic split manifests
+├── dataset/                     # legacy MRI dataset kept in place
+├── docs/                        # legacy and dataset audit docs
+├── models/                      # legacy model binaries kept in place
+├── requirements/                # dependency group files
+├── scripts/                     # audit, split, and inspection scripts
+├── src/brainscan/               # reusable BrainScanAI package
+├── static/                      # legacy uploads and Grad-CAM outputs
+├── templates/                   # legacy Flask template
+├── tests/unit/                  # unit tests
+├── main.py                      # legacy Flask app
+├── train_model.py               # legacy training script
+├── test.py                      # legacy evaluation script
+└── UPGRADE_PLAN.md              # roadmap source of truth
 ```
 
 ## Setup
 
-Phase 1A only makes setup partially reproducible. The original legacy environment versions were not recorded, so the dependency files are best-effort compatible constraints rather than exact historical pins.
+The original legacy environment versions were not preserved, so dependency files are best-effort compatible constraints rather than exact historical pins.
 
 ### 1. Create a virtual environment
 
@@ -117,7 +124,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-### 2. Install the Phase 1A package and base/dev dependencies
+### 2. Install the package and base/dev dependencies
 
 ```powershell
 python -m pip install -e .
@@ -125,25 +132,119 @@ python -m pip install -r requirements\base.txt
 python -m pip install -r requirements\dev.txt
 ```
 
-### 3. Optional: install legacy/ML-oriented dependencies
+### 3. Install the ML stack
 
 ```powershell
 python -m pip install -r requirements\ml.txt
 ```
 
-Note: depending on Python version and platform, TensorFlow compatibility may require adjustment because the original project did not preserve its exact package versions.
+The current repository environment already supports the Phase 1C data pipeline with PyTorch and torchvision. TensorFlow remains listed because legacy project files still depend on it.
+
+## Manifest-Based Data Pipeline
+
+Phase 1C introduces a reusable manifest-based PyTorch data path:
+
+```text
+data/splits/*.csv
+  ->
+BrainMRIDataset
+  ->
+train / val / test transforms
+  ->
+PyTorch DataLoaders
+```
+
+Important design rules:
+
+- labels come from the manifests, not from scanning folder names
+- canonical class IDs come only from `src/brainscan/data/constants.py`
+- images are always converted to 3-channel RGB
+- the dataset returns image tensors and canonical integer labels
+- validation and test preprocessing are deterministic
+
+### Why RGB?
+
+The source MRI images may be grayscale, but Phase 1 converts every sample to RGB because upcoming ImageNet-pretrained backbones expect 3-channel input.
+
+### Why 224x224?
+
+Phase 1 training config now defaults to `224x224` instead of the legacy `150x150` because `224x224` is the standard transfer-learning input size for common ImageNet-pretrained CNN backbones.
+
+This does **not** change the legacy Flask preprocessing yet. The old app remains untouched until later migration.
+
+## Preprocessing Strategy
+
+### Train preprocessing
+
+Current conservative train-time pipeline:
+
+- resize to configured image size
+- random rotation up to 5 degrees
+- tensor conversion
+- ImageNet normalization
+
+No aggressive augmentation is used yet.
+
+### Validation and test preprocessing
+
+Validation and test pipelines are deterministic and identical:
+
+- resize to configured image size
+- tensor conversion
+- ImageNet normalization
+
+### Normalization
+
+ImageNet normalization values are used:
+
+- mean: `(0.485, 0.456, 0.406)`
+- std: `(0.229, 0.224, 0.225)`
+
+This is not because MRI intensities naturally match ImageNet statistics. It is used because the first transfer-learning baselines will follow the preprocessing convention expected by ImageNet-pretrained backbones.
+
+## Reproducibility
+
+Phase 1C includes reproducibility helpers for:
+
+- Python `random`
+- NumPy
+- PyTorch
+- CUDA seeding where available
+- seeded DataLoader worker initialization
+- seeded train-loader ordering with a PyTorch `Generator`
+
+This phase aims for deterministic data ordering under controlled settings. It does **not** claim full GPU mathematical determinism for all future training workloads.
+
+## Inspecting Real DataLoaders
+
+To inspect the real manifest-backed MRI dataloaders:
+
+```powershell
+python scripts\inspect_dataloaders.py
+```
+
+The script prints:
+
+- train/val/test dataset sizes
+- per-class counts
+- one real batch shape
+- label tensor shape
+- label IDs
+- tensor dtypes
+- NaN/Inf checks
 
 ## Verification
 
-Phase 1A verification commands:
+Current verification commands:
 
 ```powershell
-python -m compileall src
+python -m compileall src scripts
 python -m pytest tests/unit -q
+python scripts\inspect_dataloaders.py
 ```
 
 ## Roadmap
 
 The upgrade roadmap is defined in [UPGRADE_PLAN.md](UPGRADE_PLAN.md).
 
-For now, this repository is intentionally moving in small verified steps rather than rewriting the whole system at once.
+The next phases will build on this foundation, but the project should only claim features that are actually implemented and verified.

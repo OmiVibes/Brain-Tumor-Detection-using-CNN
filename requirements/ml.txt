@@ -2,6 +2,8 @@
 # Exact historical versions were unavailable from the original project.
 # TensorFlow compatibility may need adjustment depending on Python/platform.
 
+torch>=2.8,<3.0
+torchvision>=0.23,<1.0
 tensorflow>=2.16,<2.21
 opencv-python>=4.10,<5.0
 matplotlib>=3.8,<4.0
