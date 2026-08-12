@@ -404,7 +404,7 @@ def plot_training_curves(history: list[HistoryEntry], output_dir: str | Path) ->
     val_loss = [float(row["val_loss"]) for row in history]
     train_accuracy = [float(row["train_accuracy"]) for row in history]
     val_accuracy = [float(row["val_accuracy"]) for row in history]
-    val_f1 = [float(row["val_f1_macro"]) for row in history]
+    val_f1 = [float(row["val_macro_f1"]) for row in history]
 
     figures = [
         (
@@ -428,7 +428,7 @@ def plot_training_curves(history: list[HistoryEntry], output_dir: str | Path) ->
             "Macro F1",
             val_f1,
             None,
-            "val_f1_macro",
+            "val_macro_f1",
             None,
         ),
     ]
@@ -517,7 +517,7 @@ def fit_classifier(
             "val_accuracy": val_metrics["accuracy"],
             "val_precision_macro": val_metrics["precision_macro"],
             "val_recall_macro": val_metrics["recall_macro"],
-            "val_f1_macro": val_metrics["f1_macro"],
+            "val_macro_f1": val_metrics["f1_macro"],
             "learning_rate": train_metrics["learning_rate"],
         }
         history.append(history_entry)
@@ -526,7 +526,7 @@ def fit_classifier(
         improved, should_stop = early_stopping.update(current_score, epoch)
 
         if scheduler is not None:
-            scheduler.step(current_score if monitor_name == "val_f1_macro" else history_entry["val_loss"])
+            scheduler.step(current_score if monitor_name == "val_macro_f1" else history_entry["val_loss"])
 
         checkpoint_metadata_with_epoch = {
             **checkpoint_metadata,
@@ -626,7 +626,8 @@ def reload_and_validate_checkpoint(
         raise ValueError("Checkpoint reload detected non-finite model parameters.")
 
     return {
-        "checkpoint": checkpoint,
+        "checkpoint_epoch": checkpoint["epoch"],
+        "checkpoint_metric_keys": sorted(checkpoint["metrics"].keys()),
         "logits_shape": tuple(logits.shape),
         "probability_sums_close_to_one": True,
         "prediction_range_valid": True,

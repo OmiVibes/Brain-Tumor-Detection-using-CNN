@@ -137,7 +137,7 @@ def main() -> None:
     print(f"  final_train_accuracy={final_history['train_accuracy']}")
     print(f"  final_val_loss={final_history['val_loss']}")
     print(f"  final_val_accuracy={final_history['val_accuracy']}")
-    print(f"  final_val_macro_f1={final_history['val_f1_macro']}")
+    print(f"  final_val_macro_f1={final_history['val_macro_f1']}")
     print(f"  best_checkpoint={resolve_project_path(results['best_checkpoint_path'])}")
     print(f"  last_checkpoint={resolve_project_path(results['last_checkpoint_path'])}")
     print(f"  history_json={resolve_project_path(results['history_json_path'])}")

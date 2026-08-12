@@ -28,9 +28,9 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 1C - manifest-backed PyTorch data pipeline**
+Current milestone: **Phase 1D - first reproducible ResNet18 baseline**
 
-What is implemented through Phase 1C:
+What is implemented through Phase 1D:
 
 - environment and dependency scaffolding
 - central canonical class mapping
@@ -39,16 +39,17 @@ What is implemented through Phase 1C:
 - deterministic train/validation/test manifest files
 - manifest-backed PyTorch dataset and dataloader utilities
 - centralized preprocessing transforms
-- reproducibility helpers for seeded loading
-- unit tests for config, data audit, manifests, dataset loading, preprocessing, loaders, and reproducibility
+- reproducibility helpers for seeded loading and training
+- ResNet18 classifier builder using torchvision pretrained weights
+- reusable training loop with AdamW, ReduceLROnPlateau, AMP-on-CUDA support, checkpointing, and early stopping
+- structured training-history export and training-curve generation
+- unit tests for config, data audit, manifests, dataset loading, preprocessing, loaders, reproducibility, classifier building, checkpointing, and training behavior
 
 What is intentionally **not** implemented yet:
 
-- model training
-- ResNet18 or any other classifier architecture
-- loss/optimizer logic
+- full held-out test-set evaluation for the new baseline
 - Grad-CAM v2
-- evaluation metrics for a new model
+- model comparison experiments
 - FastAPI
 - React frontend
 - segmentation
@@ -64,7 +65,7 @@ What is intentionally **not** implemented yet:
 - `multi_stage_classification.py` legacy inference helper
 - `grad_cam.py` legacy Grad-CAM utility
 
-### BrainScanAI foundation currently available
+### BrainScanAI functionality currently available
 
 - canonical class mapping in `src/brainscan/data/constants.py`
 - config loading in `src/brainscan/core/config.py`
@@ -73,6 +74,9 @@ What is intentionally **not** implemented yet:
 - manifest-backed PyTorch dataset and dataloader utilities
 - train/eval preprocessing builders
 - inspection script for real MRI dataloaders
+- ResNet18 classifier creation in `src/brainscan/models/classifier.py`
+- reusable classifier training loop in `src/brainscan/training/train_classifier.py`
+- training orchestration script in `scripts/train.py`
 
 ## Current Limitations
 
@@ -80,10 +84,10 @@ The repository is still in transition. Important limitations remain:
 
 - the legacy two-stage TensorFlow pipeline still exists unchanged
 - the legacy Grad-CAM wiring is still scientifically invalid
-- no new model has been trained yet
 - subject-level leakage cannot be ruled out from the available dataset filenames
 - dataset provenance/license/citation could not be established from the repository contents
 - no API, database, deployment, or product workflow exists yet
+- the new ResNet18 baseline has not been evaluated on `test.csv` yet by design
 
 ## Research / Educational Disclaimer
 
@@ -95,32 +99,34 @@ It is **not** a medical device, not clinically validated, and not intended to re
 
 ```text
 .
-├── artifacts/data_audit/        # dataset audit outputs
-├── configs/                     # project configuration
-├── data/splits/                 # deterministic split manifests
-├── dataset/                     # legacy MRI dataset kept in place
-├── docs/                        # legacy and dataset audit docs
-├── models/                      # legacy model binaries kept in place
-├── requirements/                # dependency group files
-├── scripts/                     # audit, split, and inspection scripts
-├── src/brainscan/               # reusable BrainScanAI package
-├── static/                      # legacy uploads and Grad-CAM outputs
-├── templates/                   # legacy Flask template
-├── tests/unit/                  # unit tests
-├── main.py                      # legacy Flask app
-├── train_model.py               # legacy training script
-├── test.py                      # legacy evaluation script
-└── UPGRADE_PLAN.md              # roadmap source of truth
+|-- artifacts/data_audit/        # dataset audit outputs
+|-- configs/                     # project configuration
+|-- data/splits/                 # deterministic split manifests
+|-- dataset/                     # legacy MRI dataset kept in place
+|-- docs/                        # legacy and dataset audit docs
+|-- models/                      # legacy model binaries kept in place
+|-- requirements/                # dependency group files
+|-- scripts/                     # audit, split, inspection, and training scripts
+|-- src/brainscan/               # reusable BrainScanAI package
+|-- static/                      # legacy uploads and Grad-CAM outputs
+|-- templates/                   # legacy Flask template
+|-- tests/unit/                  # unit tests
+|-- main.py                      # legacy Flask app
+|-- train_model.py               # legacy training script
+|-- test.py                      # legacy evaluation script
+`-- UPGRADE_PLAN.md              # roadmap source of truth
 ```
 
 ## Setup
 
 The original legacy environment versions were not preserved, so dependency files are best-effort compatible constraints rather than exact historical pins.
 
-### 1. Create a virtual environment
+### 1. Create a project-local virtual environment
+
+For the verified training setup, use a dedicated Python 3.12 virtual environment so the upgraded PyTorch stack stays isolated from legacy/system packages.
 
 ```powershell
-python -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
@@ -138,11 +144,21 @@ python -m pip install -r requirements\dev.txt
 python -m pip install -r requirements\ml.txt
 ```
 
-The current repository environment already supports the Phase 1C data pipeline with PyTorch and torchvision. TensorFlow remains listed because legacy project files still depend on it.
+TensorFlow remains listed because legacy project files still depend on it.
+
+### 4. Install the appropriate PyTorch build
+
+The repository requirements stay generic so the project remains installable on CPU-only and GPU systems. For the verified Phase 1D training run on Windows + NVIDIA GPU, the isolated `.venv` used:
+
+- Python `3.12.8`
+- PyTorch `2.12.1+cu130`
+- torchvision `0.27.1+cu130`
+
+Install the official PyTorch build appropriate for your machine before running real training.
 
 ## Manifest-Based Data Pipeline
 
-Phase 1C introduces a reusable manifest-based PyTorch data path:
+Phase 1D continues to use the reusable manifest-based PyTorch data path:
 
 ```text
 data/splits/*.csv
@@ -164,13 +180,13 @@ Important design rules:
 
 ### Why RGB?
 
-The source MRI images may be grayscale, but Phase 1 converts every sample to RGB because upcoming ImageNet-pretrained backbones expect 3-channel input.
+The source MRI images may be grayscale, but Phase 1 converts every sample to RGB because ImageNet-pretrained backbones expect 3-channel input.
 
 ### Why 224x224?
 
-Phase 1 training config now defaults to `224x224` instead of the legacy `150x150` because `224x224` is the standard transfer-learning input size for common ImageNet-pretrained CNN backbones.
+Phase 1 training config defaults to `224x224` instead of the legacy `150x150` because `224x224` is the standard transfer-learning input size for common ImageNet-pretrained CNN backbones.
 
-This does **not** change the legacy Flask preprocessing yet. The old app remains untouched until later migration.
+This does **not** change the legacy Flask preprocessing. The old app remains untouched until later migration.
 
 ## Preprocessing Strategy
 
@@ -200,11 +216,11 @@ ImageNet normalization values are used:
 - mean: `(0.485, 0.456, 0.406)`
 - std: `(0.229, 0.224, 0.225)`
 
-This is not because MRI intensities naturally match ImageNet statistics. It is used because the first transfer-learning baselines will follow the preprocessing convention expected by ImageNet-pretrained backbones.
+This is not because MRI intensities naturally match ImageNet statistics. It is used because the first transfer-learning baselines follow the preprocessing convention expected by ImageNet-pretrained backbones.
 
 ## Reproducibility
 
-Phase 1C includes reproducibility helpers for:
+Phase 1D includes reproducibility helpers for:
 
 - Python `random`
 - NumPy
@@ -212,15 +228,89 @@ Phase 1C includes reproducibility helpers for:
 - CUDA seeding where available
 - seeded DataLoader worker initialization
 - seeded train-loader ordering with a PyTorch `Generator`
+- deterministic training configuration capture in checkpoints
 
-This phase aims for deterministic data ordering under controlled settings. It does **not** claim full GPU mathematical determinism for all future training workloads.
+This phase aims for deterministic data ordering and reproducible training configuration under controlled settings. It does **not** claim full GPU mathematical determinism for all future workloads.
+
+## ResNet18 Baseline
+
+Phase 1D adds the first clean BrainScanAI baseline:
+
+- architecture: `resnet18`
+- initialization: `ResNet18_Weights.IMAGENET1K_V1`
+- classes: `glioma`, `meningioma`, `pituitary`, `no_tumor`
+- image size: `224x224`
+- batch size: `16`
+- optimizer: `AdamW`
+- learning rate: `1e-4`
+- weight decay: `1e-4`
+- scheduler: `ReduceLROnPlateau`
+- loss: `CrossEntropyLoss`
+- early stopping monitor: validation macro F1
+- dataset fingerprint: `b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1`
+
+The baseline fine-tunes the full network and selects the best checkpoint using validation macro F1. The test split is intentionally not used during checkpoint selection.
+
+### Verified baseline run
+
+The first verified full training run used:
+
+- device: `cuda`
+- GPU: `NVIDIA GeForce GTX 1650`
+- available VRAM: about `4.0 GB`
+- AMP: enabled
+- maximum epochs configured: `20`
+- epochs completed: `14`
+- best epoch: `9`
+
+Best validation metrics from the saved history:
+
+- loss: `0.0378`
+- accuracy: `0.9858`
+- macro precision: `0.9859`
+- macro recall: `0.9859`
+- macro F1: `0.9858`
+
+Final epoch metrics:
+
+- train loss: `0.0105`
+- train accuracy: `0.9977`
+- validation loss: `0.0652`
+- validation accuracy: `0.9801`
+- validation macro F1: `0.9800`
+
+Saved artifacts are written to:
+
+- `artifacts/models/resnet18_baseline_best.pt`
+- `artifacts/models/resnet18_baseline_last.pt`
+- `artifacts/training/resnet18_baseline_history.json`
+- `artifacts/training/resnet18_baseline_history.csv`
+- `artifacts/training/loss_curve.png`
+- `artifacts/training/accuracy_curve.png`
+- `artifacts/training/f1_curve.png`
+
+These generated artifacts are intentionally ignored by Git.
+
+## Training
+
+Run the full baseline:
+
+```powershell
+.venv\Scripts\python.exe scripts\train.py
+```
+
+Run the short smoke test:
+
+```powershell
+.venv\Scripts\python.exe scripts\train.py --smoke-test
+```
 
 ## Inspecting Real DataLoaders
 
 To inspect the real manifest-backed MRI dataloaders:
 
 ```powershell
-python scripts\inspect_dataloaders.py
+.venv\Scripts\python.exe scripts\inspect_dataloaders.py
 ```
 
 The script prints:
@@ -238,9 +328,10 @@ The script prints:
 Current verification commands:
 
 ```powershell
-python -m compileall src scripts
-python -m pytest tests/unit -q
-python scripts\inspect_dataloaders.py
+.venv\Scripts\python.exe -m compileall src scripts
+.venv\Scripts\python.exe -m pytest tests/unit -q
+.venv\Scripts\python.exe scripts\inspect_dataloaders.py
+.venv\Scripts\python.exe scripts\train.py --smoke-test
 ```
 
 ## Roadmap
