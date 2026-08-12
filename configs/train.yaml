@@ -10,6 +10,8 @@ dataset:
   root: dataset
   train_dir: dataset/train
   test_dir: dataset/test
+  split_manifest_dir: data/splits
+  split_seed: 42
   physical_class_folders:
     - glioma
     - meningioma

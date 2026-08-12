@@ -1,0 +1,396 @@
+{
+  "aspect_ratio_summary": {
+    "max": 1.785714,
+    "mean": 0.99401,
+    "min": 0.644809
+  },
+  "audit_algorithm": {
+    "content_hash": "sha256",
+    "perceptual_hash": "dhash-8",
+    "perceptual_hash_threshold": 4
+  },
+  "audit_timestamp": "2026-08-12T17:40:35.535583+00:00",
+  "canonical_class_counts": {
+    "glioma": 1621,
+    "meningioma": 1645,
+    "no_tumor": 2000,
+    "pituitary": 1757
+  },
+  "chosen_split_methodology": {
+    "justification": "Cross-split or cross-class exact duplicate leakage was detected, so the legacy split boundaries cannot be trusted safely. The full valid dataset is re-split deterministically using duplicate-aware image-level grouping.",
+    "split_fractions": {
+      "test": 0.1,
+      "train": 0.8,
+      "val": 0.1
+    },
+    "strategy": "rebuild_full_dataset_stratified_80_10_10"
+  },
+  "corrupt_or_unreadable_images": 0,
+  "dataset_provenance": {
+    "dataset_provenance": "UNKNOWN",
+    "evidence_inspected": [
+      {
+        "file": "README.md",
+        "line": "47",
+        "text": "- legacy dataset placement"
+      },
+      {
+        "file": "README.md",
+        "line": "99",
+        "text": "\u251c\u2500\u2500 dataset/                  # legacy MRI image dataset (kept in place)"
+      },
+      {
+        "file": "README.md",
+        "line": "105",
+        "text": "\u251c\u2500\u2500 UPGRADE_PLAN.md           # source-of-truth roadmap"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "96",
+        "text": "The current training code appears to use a four-folder dataset with binary classification."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "326",
+        "text": "Use only what is necessary for the selected dataset and file formats."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "385",
+        "text": "## Dataset versioning"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "419",
+        "text": "+-- LICENSE"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "452",
+        "text": "|       |   +-- dataset.py"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "523",
+        "text": "|   +-- 01_dataset_analysis.ipynb"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "578",
+        "text": "- current dataset"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "604",
+        "text": "### 1.1 Reorganize source code"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "633",
+        "text": "### 1.4 Create deterministic dataset split"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "927",
+        "text": "## Dataset requirement"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "929",
+        "text": "This phase requires a dataset containing tumor segmentation masks."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "931",
+        "text": "Do not fabricate masks from the classification dataset."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "933",
+        "text": "Potential research datasets should be evaluated separately before implementation."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1290",
+        "text": "training dataset"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1436",
+        "text": "Track dataset versions and split manifests."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1438",
+        "text": "Do not commit huge datasets directly into Git."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1607",
+        "text": "# PHASE 19 - Bias and Dataset Analysis"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1615",
+        "text": "possible source bias"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1753",
+        "text": "dataset version"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1783",
+        "text": "5. Avoid augmentation before dataset splitting."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1838",
+        "text": "feat: add reproducible MRI dataset loader"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1874",
+        "text": "`UPGRADE_PLAN.md` is the source of truth for the intended architecture and development roadmap."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1900",
+        "text": "Do not fabricate dataset characteristics."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1902",
+        "text": "Inspect the actual repository and dataset."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "1908",
+        "text": "Segmentation requires a real labelled segmentation dataset."
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "2007",
+        "text": "- segmentation dataset pipeline"
+      },
+      {
+        "file": "UPGRADE_PLAN.md",
+        "line": "2113",
+        "text": "6. Any dataset issues discovered"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "5",
+        "text": "This document preserves the current legacy project state before the BrainScanAI 2.0 upgrade begins. It describes the legacy architecture, runtime behavior, dataset and model assets present in the repository, and the known scientific and engineering issues that must be addressed later."
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "25",
+        "text": "- `dataset/`"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "51",
+        "text": "## Existing Dataset Structure"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "53",
+        "text": "The repository currently contains a folder-per-class image dataset in Keras-style layout:"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "56",
+        "text": "dataset/"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "84",
+        "text": "The dataset remains in place and is intentionally not moved during Phase 0."
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "109",
+        "text": "These artifacts are preserved on disk as part of the legacy project state, but they are not appropriate source-controlled assets for the new Git history."
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "127",
+        "text": "`train_model.py` trains a binary detector using `flow_from_directory(..., class_mode='binary')` against a dataset directory that contains four class folders. This is scientifically questionable and may not represent a valid tumor-vs-no-tumor training setup."
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "190",
+        "text": "## Files Preserved In Git For Legacy Source Snapshot"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "192",
+        "text": "The Phase 0 Git snapshot is intended to preserve the legacy source code and documentation, not the full raw dataset or generated artifacts."
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "194",
+        "text": "Legacy source files expected to be preserved in Git:"
+      },
+      {
+        "file": "docs/legacy_system.md",
+        "line": "210",
+        "text": "- `dataset/` image files"
+      },
+      {
+        "file": "train_model.py",
+        "line": "10",
+        "text": "# Define dataset paths"
+      },
+      {
+        "file": "train_model.py",
+        "line": "11",
+        "text": "dataset_path = \"dataset\""
+      },
+      {
+        "file": "train_model.py",
+        "line": "12",
+        "text": "train_path = os.path.join(dataset_path, \"train\")"
+      },
+      {
+        "file": "train_model.py",
+        "line": "13",
+        "text": "test_path = os.path.join(dataset_path, \"test\")"
+      },
+      {
+        "file": "test.py",
+        "line": "11",
+        "text": "# Define dataset and model paths"
+      },
+      {
+        "file": "test.py",
+        "line": "12",
+        "text": "dataset_path = \"dataset\""
+      },
+      {
+        "file": "test.py",
+        "line": "13",
+        "text": "test_path = os.path.join(dataset_path, \"test\")"
+      },
+      {
+        "file": "test.py",
+        "line": "98",
+        "text": "sample_image_path = \"D:/Notes/Degree/Projects/Brain Tumor Detection Using CNN/dataset/train/notumor/Tr-no_0017.jpg\""
+      },
+      {
+        "file": "templates/index.html",
+        "line": "19",
+        "text": "background: url('https://example.com/your-background-image.jpg') no-repeat center center fixed; /* Add your background image URL */"
+      },
+      {
+        "file": "templates/index.html",
+        "line": "449",
+        "text": "<p>Our deep learning model was trained on a comprehensive dataset of over 3600 MRI scans, achieving state-of-the-art performance in tumor detection and classification. The system can identify various tumor types including glioma, meningioma, and pituitary tumors.</p>"
+      }
+    ],
+    "notes": "No explicit source URL, license, author, citation, or dataset README establishing provenance was found in the repository files inspected."
+  },
+  "dataset_root": "dataset",
+  "exact_duplicate_summary": {
+    "cross_class_groups": 0,
+    "cross_split_groups": 79,
+    "duplicate_groups": 194,
+    "duplicate_rows": 491
+  },
+  "extension_counts": {
+    ".jpg": 7023
+  },
+  "file_size_summary_bytes": {
+    "max": 727906,
+    "mean": 22583.582087,
+    "min": 3475
+  },
+  "final_manifest_counts": {
+    "per_class_counts": {
+      "test": {
+        "glioma": 162,
+        "meningioma": 164,
+        "no_tumor": 200,
+        "pituitary": 176
+      },
+      "train": {
+        "glioma": 1297,
+        "meningioma": 1317,
+        "no_tumor": 1599,
+        "pituitary": 1405
+      },
+      "val": {
+        "glioma": 162,
+        "meningioma": 164,
+        "no_tumor": 201,
+        "pituitary": 176
+      }
+    },
+    "split_counts": {
+      "test": 702,
+      "train": 5618,
+      "val": 703
+    }
+  },
+  "height_summary": {
+    "max": 1446,
+    "mean": 448.34686,
+    "min": 168
+  },
+  "mode_counts": {
+    "L": 3093,
+    "P": 1,
+    "RGB": 3926,
+    "RGBA": 3
+  },
+  "near_duplicate_summary": {
+    "algorithm": "dhash-8",
+    "candidate_pairs": 18037,
+    "cross_class_pairs": 1057,
+    "cross_split_pairs": 5557,
+    "distance_threshold": 4
+  },
+  "non_image_extension_files": 0,
+  "physical_class_counts": {
+    "glioma": 1621,
+    "meningioma": 1645,
+    "notumor": 2000,
+    "pituitary": 1757
+  },
+  "split_class_counts": {
+    "test": {
+      "glioma": 300,
+      "meningioma": 306,
+      "no_tumor": 405,
+      "pituitary": 300
+    },
+    "train": {
+      "glioma": 1321,
+      "meningioma": 1339,
+      "no_tumor": 1595,
+      "pituitary": 1457
+    }
+  },
+  "split_counts": {
+    "test": 1311,
+    "train": 5712
+  },
+  "subject_id_inference": {
+    "cross_split_subject_leakage": null,
+    "inference_rule": "No reliable subject identifier detected in current legacy filenames",
+    "status": "CANNOT_RULE_OUT",
+    "subject_ids_detected": 0
+  },
+  "total_images": 7023,
+  "unreadable_files": [],
+  "unusual_dimension_samples": [],
+  "valid_images": 7023,
+  "width_summary": {
+    "max": 1920,
+    "mean": 445.891499,
+    "min": 150
+  },
+  "zero_byte_files": 0
+}

@@ -1,0 +1,20 @@
+{
+  "algorithm": {
+    "content_hash": "sha256",
+    "perceptual_hash": "dhash-8"
+  },
+  "audit_timestamp": "2026-08-12T17:40:35.534767+00:00",
+  "class_counts": {
+    "glioma": 1621,
+    "meningioma": 1645,
+    "no_tumor": 2000,
+    "pituitary": 1757
+  },
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "split_counts": {
+    "test": 702,
+    "train": 5618,
+    "val": 703
+  },
+  "total_images": 7023
+}
