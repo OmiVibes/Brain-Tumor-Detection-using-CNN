@@ -22,3 +22,5 @@ static/uploads/
 static/gradcam/
 Matrix/
 artifacts/data_inspection/
+artifacts/models/
+artifacts/training/

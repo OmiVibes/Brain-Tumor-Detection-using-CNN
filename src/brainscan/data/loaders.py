@@ -13,7 +13,10 @@ from brainscan.data.dataset import BrainMRIDataset
 from brainscan.data.preprocessing import build_eval_transform, build_train_transform
 
 
-def create_datasets(config_path: str | Path = "configs/train.yaml") -> dict[str, BrainMRIDataset]:
+def create_datasets(
+    config_path: str | Path = "configs/train.yaml",
+    include_test: bool = True,
+) -> dict[str, BrainMRIDataset]:
     config = load_train_config(config_path)
     image_size = config["training"]["image_size"]
     split_manifest_dir = resolve_project_path(config["dataset"]["split_manifest_dir"])
@@ -27,24 +30,30 @@ def create_datasets(config_path: str | Path = "configs/train.yaml") -> dict[str,
             manifest_path=split_manifest_dir / "val.csv",
             transform=build_eval_transform(image_size),
         ),
-        "test": BrainMRIDataset(
+    }
+
+    if include_test:
+        datasets["test"] = BrainMRIDataset(
             manifest_path=split_manifest_dir / "test.csv",
             transform=build_eval_transform(image_size),
-        ),
-    }
+        )
+
     return datasets
 
 
-def create_dataloaders(config_path: str | Path = "configs/train.yaml") -> dict[str, DataLoader]:
+def create_dataloaders(
+    config_path: str | Path = "configs/train.yaml",
+    include_test: bool = True,
+) -> dict[str, DataLoader]:
     config = load_train_config(config_path)
-    datasets = create_datasets(config_path)
+    datasets = create_datasets(config_path, include_test=include_test)
     batch_size = int(config["training"]["batch_size"])
     num_workers = int(config["training"]["num_workers"])
     seed = int(config["training"]["seed"])
 
     train_generator = make_torch_generator(seed)
 
-    return {
+    loaders = {
         "train": DataLoader(
             datasets["train"],
             batch_size=batch_size,
@@ -60,14 +69,22 @@ def create_dataloaders(config_path: str | Path = "configs/train.yaml") -> dict[s
             num_workers=num_workers,
             worker_init_fn=seed_worker,
         ),
-        "test": DataLoader(
+    }
+
+    if include_test:
+        loaders["test"] = DataLoader(
             datasets["test"],
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
             worker_init_fn=seed_worker,
-        ),
-    }
+        )
+
+    return loaders
+
+
+def create_train_val_dataloaders(config_path: str | Path = "configs/train.yaml") -> dict[str, DataLoader]:
+    return create_dataloaders(config_path, include_test=False)
 
 
 def count_dataset_classes(dataset: BrainMRIDataset) -> dict[str, int]:
