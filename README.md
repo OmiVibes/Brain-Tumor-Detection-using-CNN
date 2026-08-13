@@ -28,7 +28,7 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 1E - formal held-out ResNet18 evaluation**
+Current milestone: **Phase 1F - scientifically correct ResNet18 Grad-CAM explainability**
 
 What is implemented through Phase 1E:
 
@@ -46,9 +46,17 @@ What is implemented through Phase 1E:
 - structured training-history export and training-curve generation
 - unit tests for config, data audit, manifests, dataset loading, preprocessing, loaders, reproducibility, classifier building, checkpointing, training behavior, and evaluation logic
 
+What is implemented in Phase 1F:
+
+- reusable Grad-CAM explainability engine for the frozen ResNet18 baseline
+- verified ResNet18 target-layer resolution at `layer4[-1].conv2`
+- explanation generation from the actual prediction model rather than a surrogate model
+- explainability diagnostics and border-attention checks
+- review-grid generation for correct and incorrect examples
+- unit tests for Grad-CAM behavior and parameter preservation
+
 What is intentionally **not** implemented yet:
 
-- Grad-CAM v2
 - model comparison experiments
 - calibration / temperature scaling
 - FastAPI
@@ -78,13 +86,15 @@ What is intentionally **not** implemented yet:
 - ResNet18 classifier creation in `src/brainscan/models/classifier.py`
 - reusable classifier training loop in `src/brainscan/training/train_classifier.py`
 - training orchestration script in `scripts/train.py`
+- scientifically correct ResNet18 Grad-CAM in `src/brainscan/explainability/gradcam.py`
+- explanation generation script in `scripts/generate_gradcam.py`
 
 ## Current Limitations
 
 The repository is still in transition. Important limitations remain:
 
 - the legacy two-stage TensorFlow pipeline still exists unchanged
-- the legacy Grad-CAM wiring is still scientifically invalid
+- the legacy Grad-CAM wiring still exists in legacy code and remains scientifically invalid for BrainScanAI 2.0
 - subject-level leakage cannot be ruled out from the available dataset filenames
 - dataset provenance/license/citation could not be established from the repository contents
 - no API, database, deployment, or product workflow exists yet
@@ -364,6 +374,28 @@ This subset is only a sensitivity analysis. It is **not** a guaranteed subject-i
 - softmax confidence is raw model confidence, not calibrated medical certainty
 - this is a research/educational prototype, not clinical validation
 
+## ResNet18 Explainability
+
+Phase 1F implements scientifically correct Grad-CAM using the exact frozen inference checkpoint:
+
+- checkpoint: `artifacts/models/resnet18_baseline_best.pt`
+- checkpoint epoch: `9`
+- target layer: `layer4[-1].conv2`
+- explanation method: standard Grad-CAM
+
+This replaces the old invalid approach where prediction and explanation were produced by different models.
+
+Important limitation:
+
+- Grad-CAM highlights model attention regions
+- it does not prove tumor boundaries, true tumor location, causality, or clinical validity
+
+Representative explainability artifacts:
+
+- `artifacts/explainability/resnet18_baseline/review_grid.png`
+- `artifacts/explainability/resnet18_baseline/summary.json`
+- [docs/resnet18_explainability.md](docs/resnet18_explainability.md)
+
 ## Training
 
 Run the full baseline:
@@ -382,6 +414,18 @@ Run the formal held-out evaluation:
 
 ```powershell
 .venv\Scripts\python.exe scripts\evaluate.py
+```
+
+Run Grad-CAM explainability generation:
+
+```powershell
+.venv\Scripts\python.exe scripts\generate_gradcam.py
+```
+
+Run Grad-CAM for one specific image:
+
+```powershell
+.venv\Scripts\python.exe scripts\generate_gradcam.py --image dataset/test/glioma/Te-gl_0232.jpg
 ```
 
 ## Inspecting Real DataLoaders
@@ -412,6 +456,7 @@ Current verification commands:
 .venv\Scripts\python.exe scripts\inspect_dataloaders.py
 .venv\Scripts\python.exe scripts\train.py --smoke-test
 .venv\Scripts\python.exe scripts\evaluate.py
+.venv\Scripts\python.exe scripts\generate_gradcam.py
 ```
 
 ## Roadmap

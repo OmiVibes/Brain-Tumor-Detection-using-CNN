@@ -44,6 +44,32 @@ class TinyConvNet(nn.Module):
         return self.classifier(pooled)
 
 
+class ControlledGradCAMNet(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(3, 2, kernel_size=1, bias=False),
+            nn.ReLU(),
+        )
+        self.pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.classifier = nn.Linear(2, 4, bias=False)
+
+        with torch.no_grad():
+            self.features[0].weight.zero_()
+            self.features[0].weight[0, 0, 0, 0] = 1.0
+            self.features[0].weight[1, 1, 0, 0] = 1.0
+            self.classifier.weight.zero_()
+            self.classifier.weight[0, 0] = 2.0
+            self.classifier.weight[1, 1] = 2.0
+            self.classifier.weight[2, 0] = 0.5
+            self.classifier.weight[3, 1] = 0.5
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        activations = self.features(inputs)
+        pooled = self.pool(activations).flatten(1)
+        return self.classifier(pooled)
+
+
 def _checkpoint_metadata() -> dict[str, object]:
     return {
         "epoch": 9,
@@ -137,10 +163,12 @@ def test_de_normalization_and_heatmap_image_generation() -> None:
 
 
 def test_target_class_maps_differ_on_controlled_example(tmp_path) -> None:
-    model = TinyConvNet()
+    model = ControlledGradCAMNet()
     image_path = tmp_path / "controlled.png"
     Image.new("RGB", (24, 24), color=(150, 140, 130)).save(image_path)
-    tensor = torch.rand(1, 3, 24, 24)
+    tensor = torch.zeros(1, 3, 24, 24)
+    tensor[:, 0, 2:10, 2:10] = 1.0
+    tensor[:, 1, 14:22, 14:22] = 1.0
     bundle_a = generate_gradcam_explanation(
         model=model,
         image_tensor=tensor,
@@ -148,8 +176,8 @@ def test_target_class_maps_differ_on_controlled_example(tmp_path) -> None:
         checkpoint_metadata=_checkpoint_metadata(),
         target_class=0,
         architecture="resnet18",
-        target_layer=model.features[2],
-        target_layer_name="features[2]",
+        target_layer=model.features[0],
+        target_layer_name="features[0]",
     )
     bundle_b = generate_gradcam_explanation(
         model=model,
@@ -158,8 +186,8 @@ def test_target_class_maps_differ_on_controlled_example(tmp_path) -> None:
         checkpoint_metadata=_checkpoint_metadata(),
         target_class=1,
         architecture="resnet18",
-        target_layer=model.features[2],
-        target_layer_name="features[2]",
+        target_layer=model.features[0],
+        target_layer_name="features[0]",
     )
     difference = np.abs(bundle_a["resized_heatmap"] - bundle_b["resized_heatmap"]).mean()
     assert difference > 0.0

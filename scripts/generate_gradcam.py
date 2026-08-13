@@ -110,7 +110,7 @@ def _select_representative_cases() -> list[CaseRecord]:
     for row in error_rows:
         confidence = float(row["model_confidence"])
         pair = (row["true_class"], row["predicted_class"])
-        if confidence >= 0.95 or pair in {("glioma", "meningioma"), ("meningioma", "glioma")}:
+        if confidence >= 0.90 or pair in {("glioma", "meningioma"), ("meningioma", "glioma")}:
             if row["relative_path"] not in chosen_error_paths:
                 representatives.append(
                     CaseRecord(
