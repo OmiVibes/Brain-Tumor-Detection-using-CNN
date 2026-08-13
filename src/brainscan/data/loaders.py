@@ -87,6 +87,26 @@ def create_train_val_dataloaders(config_path: str | Path = "configs/train.yaml")
     return create_dataloaders(config_path, include_test=False)
 
 
+def create_test_dataloader(config_path: str | Path = "configs/train.yaml") -> DataLoader:
+    config = load_train_config(config_path)
+    image_size = config["training"]["image_size"]
+    split_manifest_dir = resolve_project_path(config["dataset"]["split_manifest_dir"])
+    batch_size = int(config["training"]["batch_size"])
+    num_workers = int(config["training"]["num_workers"])
+
+    test_dataset = BrainMRIDataset(
+        manifest_path=split_manifest_dir / "test.csv",
+        transform=build_eval_transform(image_size),
+    )
+    return DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        worker_init_fn=seed_worker,
+    )
+
+
 def count_dataset_classes(dataset: BrainMRIDataset) -> dict[str, int]:
     counts = Counter(record.canonical_class for record in dataset.records)
     return dict(sorted(counts.items()))

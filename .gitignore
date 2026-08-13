@@ -24,3 +24,9 @@ Matrix/
 artifacts/data_inspection/
 artifacts/models/
 artifacts/training/
+artifacts/evaluation/**/predictions.csv
+artifacts/evaluation/**/errors.csv
+artifacts/evaluation/**/classification_report.txt
+artifacts/evaluation/**/confusion_matrix.png
+artifacts/evaluation/**/roc_curves.png
+artifacts/evaluation/**/pr_curves.png
