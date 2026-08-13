@@ -61,6 +61,9 @@ def main() -> None:
         transform=build_eval_transform(config["training"]["image_size"]),
         return_metadata=True,
     )
+    expected_test_paths = {record.relative_path for record in test_dataset.records}
+    if any(record.split != "test" for record in test_dataset.records):
+        raise ValueError("The manifest-backed evaluation dataset contains non-test split rows.")
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
         batch_size=int(config["training"]["batch_size"]),
@@ -96,8 +99,8 @@ def main() -> None:
 
     if len(predictions["relative_paths"]) != 702:
         raise ValueError(f"Expected exactly 702 test predictions, found {len(predictions['relative_paths'])}.")
-    if any(not path.startswith("dataset/test/") for path in predictions["relative_paths"]):
-        raise ValueError("Evaluation produced rows outside dataset/test/.")
+    if set(predictions["relative_paths"]) != expected_test_paths:
+        raise ValueError("Evaluation predictions do not exactly match the test manifest rows.")
 
     prediction_rows = build_predictions_rows(
         relative_paths=predictions["relative_paths"],
@@ -121,6 +124,13 @@ def main() -> None:
     )
     confidence_stats = compute_confidence_statistics(prediction_rows)
     filtered_subset_summary = summarize_filtered_subset(prediction_rows, class_names=CANONICAL_CLASS_NAMES)
+    if filtered_subset_summary["metrics"] is not None:
+        subset_metrics = filtered_subset_summary["metrics"]
+        filtered_subset_summary["metrics"] = {
+            "overall_metrics": subset_metrics["overall_metrics"],
+            "per_class_metrics": subset_metrics["per_class_metrics"],
+            "confusion_matrix": subset_metrics["confusion_matrix"],
+        }
 
     sample_batch = next(iter(test_loader))[0]
     performance_metrics = benchmark_model_inference(model, sample_batch, device)

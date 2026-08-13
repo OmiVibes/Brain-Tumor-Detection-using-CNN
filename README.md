@@ -28,9 +28,9 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 1D - first reproducible ResNet18 baseline**
+Current milestone: **Phase 1E - formal held-out ResNet18 evaluation**
 
-What is implemented through Phase 1D:
+What is implemented through Phase 1E:
 
 - environment and dependency scaffolding
 - central canonical class mapping
@@ -42,14 +42,15 @@ What is implemented through Phase 1D:
 - reproducibility helpers for seeded loading and training
 - ResNet18 classifier builder using torchvision pretrained weights
 - reusable training loop with AdamW, ReduceLROnPlateau, AMP-on-CUDA support, checkpointing, and early stopping
+- reusable held-out evaluation pipeline with metrics, confusion analysis, confidence analysis, near-duplicate sensitivity analysis, and inference benchmarking
 - structured training-history export and training-curve generation
-- unit tests for config, data audit, manifests, dataset loading, preprocessing, loaders, reproducibility, classifier building, checkpointing, and training behavior
+- unit tests for config, data audit, manifests, dataset loading, preprocessing, loaders, reproducibility, classifier building, checkpointing, training behavior, and evaluation logic
 
 What is intentionally **not** implemented yet:
 
-- full held-out test-set evaluation for the new baseline
 - Grad-CAM v2
 - model comparison experiments
+- calibration / temperature scaling
 - FastAPI
 - React frontend
 - segmentation
@@ -87,7 +88,8 @@ The repository is still in transition. Important limitations remain:
 - subject-level leakage cannot be ruled out from the available dataset filenames
 - dataset provenance/license/citation could not be established from the repository contents
 - no API, database, deployment, or product workflow exists yet
-- the new ResNet18 baseline has not been evaluated on `test.csv` yet by design
+- subject-level leakage still cannot be ruled out
+- near-duplicate candidates still exist across the dataset and require caution when interpreting strong results
 
 ## Research / Educational Disclaimer
 
@@ -291,6 +293,77 @@ Saved artifacts are written to:
 
 These generated artifacts are intentionally ignored by Git.
 
+## Held-Out Evaluation
+
+Phase 1E performs the first formal evaluation of the frozen best checkpoint:
+
+- checkpoint: `artifacts/models/resnet18_baseline_best.pt`
+- checkpoint epoch: `9`
+- dataset fingerprint: `b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1`
+- formal test sample count: `702`
+- device used for evaluation: `cuda` on `NVIDIA GeForce GTX 1650`
+
+### Held-out test metrics
+
+- accuracy: `0.9815`
+- balanced accuracy: `0.9801`
+- macro precision: `0.9810`
+- macro recall: `0.9801`
+- macro F1: `0.9805`
+- weighted precision: `0.9814`
+- weighted recall: `0.9815`
+- weighted F1: `0.9814`
+- macro ROC-AUC (OvR): `0.9996`
+
+### Per-class held-out results
+
+- glioma: precision `0.9813`, recall `0.9691`, F1 `0.9752`
+- meningioma: precision `0.9689`, recall `0.9512`, F1 `0.9600`
+- pituitary: precision `0.9888`, recall `1.0000`, F1 `0.9944`
+- no_tumor: precision `0.9852`, recall `1.0000`, F1 `0.9926`
+
+### Validation vs held-out test
+
+Keep the two result sets separate:
+
+- best validation macro F1 from training: `0.9858`
+- held-out test macro F1: `0.9805`
+
+### Error-analysis highlights
+
+- total incorrect predictions: `13`
+- most common confusion pair: `glioma -> meningioma` (`5`)
+- next most common: `meningioma -> glioma` (`3`)
+- meningioma -> no_tumor also appears (`3`)
+- incorrect predictions with model confidence `>= 0.90`: `3`
+- incorrect predictions with model confidence `>= 0.95`: `1`
+
+### Near-duplicate sensitivity check
+
+Using the existing Phase 1B near-duplicate report:
+
+- flagged test images with cross-split near-duplicate candidates: `74`
+- near-duplicate-filtered sensitivity subset size: `628`
+- subset accuracy: `0.9825`
+- subset macro F1: `0.9821`
+
+This subset is only a sensitivity analysis. It is **not** a guaranteed subject-independent test set.
+
+### Inference performance
+
+- mean batch latency: `118.06 ms` for batch size `16`
+- mean per-image latency: `7.38 ms`
+- pure-model throughput: `135.52 images/sec`
+- end-to-end evaluation throughput: `109.74 images/sec`
+
+### Limitations
+
+- subject-level leakage cannot currently be ruled out
+- near-duplicate candidates remain in the dataset
+- dataset provenance/license is still unclear from repository contents
+- softmax confidence is raw model confidence, not calibrated medical certainty
+- this is a research/educational prototype, not clinical validation
+
 ## Training
 
 Run the full baseline:
@@ -303,6 +376,12 @@ Run the short smoke test:
 
 ```powershell
 .venv\Scripts\python.exe scripts\train.py --smoke-test
+```
+
+Run the formal held-out evaluation:
+
+```powershell
+.venv\Scripts\python.exe scripts\evaluate.py
 ```
 
 ## Inspecting Real DataLoaders
@@ -332,6 +411,7 @@ Current verification commands:
 .venv\Scripts\python.exe -m pytest tests/unit -q
 .venv\Scripts\python.exe scripts\inspect_dataloaders.py
 .venv\Scripts\python.exe scripts\train.py --smoke-test
+.venv\Scripts\python.exe scripts\evaluate.py
 ```
 
 ## Roadmap

@@ -1,0 +1,12 @@
+{
+  "device_type": "cuda",
+  "batch_size": 16,
+  "warmup_iterations": 10,
+  "timed_iterations": 50,
+  "mean_batch_latency_ms": 118.06254799999351,
+  "mean_per_image_latency_ms": 7.3789092499995945,
+  "throughput_images_per_second": 135.52138481714692,
+  "checkpoint_load_time_ms": 1254.1203999999198,
+  "full_test_wall_time_seconds": 6.397163999999975,
+  "end_to_end_images_per_second": 109.73612682119807
+}
