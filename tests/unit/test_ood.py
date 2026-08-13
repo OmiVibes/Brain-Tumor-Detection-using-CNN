@@ -114,8 +114,11 @@ def test_ood_metadata_uses_portable_relative_paths(tmp_path: Path) -> None:
         class_order=("glioma", "meningioma", "pituitary", "no_tumor"),
         class_centroids=np.zeros((4, 2), dtype=np.float64),
         diagonal_variance=np.ones((4, 2), dtype=np.float64),
+        warning_threshold=1.11,
         threshold=1.23,
+        warning_threshold_quantile=0.90,
         threshold_quantile=0.95,
+        warning_threshold_source="validation 90th percentile",
         threshold_source="validation 95th percentile",
         training_sample_count=10,
         validation_sample_count=4,
@@ -139,6 +142,7 @@ def test_ood_metadata_uses_portable_relative_paths(tmp_path: Path) -> None:
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         assert metadata["checkpoint"] == "artifacts/models/resnet18_baseline_best.pt"
         assert metadata["reference_npz"].endswith("reference.npz")
+        assert metadata["warning_threshold"] == 1.11
         assert not Path(str(metadata["checkpoint"])).is_absolute()
         assert not Path(str(metadata["reference_npz"])).is_absolute()
     finally:

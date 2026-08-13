@@ -1,5 +1,6 @@
 """Robustness helpers for BrainScanAI safe inference."""
 
+from .abstention import AbstentionDecision, decide_abstention
 from .input_validation import ImageValidationResult, SUPPORTED_IMAGE_EXTENSIONS, validate_image_file
 from .ood import (
     OODReference,
@@ -13,6 +14,7 @@ from .ood import (
 from .quality import QualityMetrics, compute_quality_metrics, derive_quality_thresholds, detect_quality_flags
 
 __all__ = [
+    "AbstentionDecision",
     "ImageValidationResult",
     "OODReference",
     "QualityMetrics",
@@ -21,6 +23,7 @@ __all__ = [
     "build_diagonal_mahalanobis_reference",
     "compute_min_diagonal_mahalanobis_scores",
     "compute_quality_metrics",
+    "decide_abstention",
     "derive_quality_thresholds",
     "detect_quality_flags",
     "extract_features_from_dataloader",

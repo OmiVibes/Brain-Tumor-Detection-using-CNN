@@ -150,6 +150,8 @@ def main() -> None:
     print(f"  feature_dimension={reference.feature_dimension}")
     print(f"  training_reference_sample_count={reference.training_sample_count}")
     print(f"  validation_threshold_sample_count={reference.validation_sample_count}")
+    print(f"  ood_warning_threshold={reference.warning_threshold:.6f}")
+    print(f"  warning_threshold_source={reference.warning_threshold_source}")
     print(f"  ood_threshold={reference.threshold:.6f}")
     print(f"  threshold_source={reference.threshold_source}")
     print(f"  ood_reference_json={resolve_project_path(OOD_REFERENCE_JSON_PATH)}")

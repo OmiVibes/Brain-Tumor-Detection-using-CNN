@@ -23,8 +23,11 @@ class OODReference:
     class_order: tuple[str, ...]
     class_centroids: np.ndarray
     diagonal_variance: np.ndarray
+    warning_threshold: float
     threshold: float
+    warning_threshold_quantile: float
     threshold_quantile: float
+    warning_threshold_source: str
     threshold_source: str
     training_sample_count: int
     validation_sample_count: int
@@ -110,6 +113,7 @@ def build_diagonal_mahalanobis_reference(
     train_labels: torch.Tensor,
     validation_features: torch.Tensor,
     *,
+    warning_threshold_quantile: float = 0.90,
     threshold_quantile: float = 0.95,
 ) -> tuple[OODReference, np.ndarray]:
     """Construct a class-conditional diagonal Mahalanobis reference and validation threshold."""
@@ -144,6 +148,7 @@ def build_diagonal_mahalanobis_reference(
         centroid_array,
         variance_array,
     )
+    warning_threshold = float(np.quantile(validation_scores, warning_threshold_quantile))
     threshold = float(np.quantile(validation_scores, threshold_quantile))
 
     reference = OODReference(
@@ -152,8 +157,13 @@ def build_diagonal_mahalanobis_reference(
         class_order=tuple(CANONICAL_CLASS_NAMES),
         class_centroids=centroid_array,
         diagonal_variance=variance_array,
+        warning_threshold=warning_threshold,
         threshold=threshold,
+        warning_threshold_quantile=warning_threshold_quantile,
         threshold_quantile=threshold_quantile,
+        warning_threshold_source=(
+            f"validation {int(warning_threshold_quantile * 100)}th percentile of min-class distance"
+        ),
         threshold_source=f"validation {int(threshold_quantile * 100)}th percentile of min-class distance",
         training_sample_count=int(train_features.shape[0]),
         validation_sample_count=int(validation_features.shape[0]),
@@ -209,8 +219,11 @@ def save_ood_reference(
         "feature_layer": reference.feature_layer,
         "feature_dimension": reference.feature_dimension,
         "ood_method": "class_conditional_diagonal_mahalanobis",
+        "warning_threshold": reference.warning_threshold,
         "threshold": reference.threshold,
+        "warning_threshold_quantile": reference.warning_threshold_quantile,
         "threshold_quantile": reference.threshold_quantile,
+        "warning_threshold_derivation": reference.warning_threshold_source,
         "threshold_derivation": reference.threshold_source,
         "dataset_fingerprint": dataset_fingerprint,
         "training_sample_count": reference.training_sample_count,
@@ -235,6 +248,13 @@ def load_ood_reference(npz_path: str | Path, json_path: str | Path) -> tuple[OOD
     resolved_json = resolve_project_path(json_path)
     arrays = np.load(resolved_npz)
     metadata = json.loads(resolved_json.read_text(encoding="utf-8"))
+    warning_threshold = float(metadata.get("warning_threshold", metadata["threshold"]))
+    warning_threshold_quantile = float(
+        metadata.get("warning_threshold_quantile", metadata["threshold_quantile"])
+    )
+    warning_threshold_source = str(
+        metadata.get("warning_threshold_derivation", metadata["threshold_derivation"])
+    )
 
     reference = OODReference(
         feature_layer=str(metadata["feature_layer"]),
@@ -242,8 +262,11 @@ def load_ood_reference(npz_path: str | Path, json_path: str | Path) -> tuple[OOD
         class_order=tuple(CANONICAL_CLASS_NAMES),
         class_centroids=arrays["class_centroids"],
         diagonal_variance=arrays["diagonal_variance"],
+        warning_threshold=warning_threshold,
         threshold=float(metadata["threshold"]),
+        warning_threshold_quantile=warning_threshold_quantile,
         threshold_quantile=float(metadata["threshold_quantile"]),
+        warning_threshold_source=warning_threshold_source,
         threshold_source=str(metadata["threshold_derivation"]),
         training_sample_count=int(metadata["training_sample_count"]),
         validation_sample_count=int(metadata["validation_sample_count"]),
