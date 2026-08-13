@@ -28,7 +28,7 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 2A - calibration and uncertainty analysis for the frozen ResNet18 baseline**
+Current milestone: **Phase 2B - robust safe inference and abstention analysis for the frozen ResNet18 baseline**
 
 What is implemented through Phase 1E:
 
@@ -64,6 +64,17 @@ What is implemented in Phase 2A:
 - uncertainty-threshold derivation from the validation distribution
 - error-detection analysis for incorrect predictions
 
+What is implemented in Phase 2B:
+
+- safe inference pipeline in `src/brainscan/inference/`
+- explicit `ACCEPT / REVIEW / ABSTAIN` decision logic
+- image validation and low-information rejection
+- validation-derived Mahalanobis OOD detection in ResNet18 penultimate feature space
+- quality heuristics for blur, brightness, contrast, and low-information inputs
+- prediction CLI in `scripts/predict.py`
+- frozen-policy robustness evaluation in `scripts/evaluate_robustness.py`
+- held-out abstention/error-capture analysis and risk-coverage artifacts
+
 What is intentionally **not** implemented yet:
 
 - model comparison experiments
@@ -98,6 +109,8 @@ What is intentionally **not** implemented yet:
 - explanation generation script in `scripts/generate_gradcam.py`
 - calibration and uncertainty tooling in `src/brainscan/uncertainty/`
 - calibration study script in `scripts/calibrate.py`
+- safe inference pipeline in `src/brainscan/inference/pipeline.py`
+- robustness evaluation script in `scripts/evaluate_robustness.py`
 
 ## Current Limitations
 
@@ -451,6 +464,91 @@ Calibration artifacts and write-up:
 - `artifacts/calibration/resnet18_baseline/reliability_after.png`
 - [docs/resnet18_calibration.md](docs/resnet18_calibration.md)
 
+## Robust Safe Inference
+
+Phase 2B adds a frozen safety layer around the same ResNet18 classifier:
+
+```text
+input validation
+-> quality checks
+-> ResNet18 inference
+-> penultimate-feature OOD score
+-> uncertainty analysis
+-> ACCEPT / REVIEW / ABSTAIN
+```
+
+The deployed robustness policy uses:
+
+- feature layer: `avgpool`
+- feature dimension: `512`
+- OOD method: class-conditional diagonal Mahalanobis distance
+- OOD warning threshold: validation `90th` percentile (`34.5758`)
+- OOD fail threshold: validation `95th` percentile (`45.2397`)
+- uncertainty thresholds: validation entropy/margin quantiles from Phase 2A
+
+Important limitation:
+
+- this is a research robustness mechanism, not a claim of clinical validity
+
+### Held-out policy behavior on `test.csv`
+
+- total test samples: `702`
+- `ACCEPT`: `286` (`40.7%`)
+- `REVIEW`: `375` (`53.4%`)
+- `ABSTAIN`: `41` (`5.8%`)
+
+### Selective performance
+
+- baseline test accuracy: `98.15%`
+- baseline risk: `1.85%` (`13 / 702`)
+- ACCEPT-only accuracy: `100.0%`
+- ACCEPT-only risk: `0.0%`
+- ACCEPT-only coverage: `40.7%`
+- ACCEPT+REVIEW coverage: `94.2%`
+- ACCEPT+REVIEW accuracy: `99.70%`
+- ACCEPT+REVIEW risk: `0.30%`
+
+### Error capture
+
+- total classifier errors on held-out test: `13`
+- wrong predictions still `ACCEPT`ed: `0`
+- wrong predictions `REVIEW`ed: `2`
+- wrong predictions `ABSTAIN`ed: `11`
+- total error-capture rate: `100.0%`
+- hard error-capture rate (`ABSTAIN` only): `84.6%`
+
+### Conservatism
+
+- correct predictions not automatically accepted: `403 / 689` (`58.5%`)
+- false abstentions among correct predictions: `30 / 689` (`4.35%`)
+
+This means the current policy is useful for risk reduction, but still conservative enough to create substantial review burden.
+
+### Synthetic OOD
+
+On 8 obvious synthetic probes:
+
+- `ACCEPT`: `0`
+- `REVIEW`: `0`
+- `ABSTAIN`: `8`
+
+### Safe inference performance
+
+- safe pipeline mean latency: `26.33 ms/image`
+- safe pipeline throughput: `37.97 images/sec`
+- Phase 1E classifier-only reference: `7.38 ms/image`
+
+The robustness layer therefore adds meaningful overhead, which is expected because it performs quality checks, feature extraction, OOD scoring, and explicit decision logic on top of classification.
+
+Artifacts and write-up:
+
+- `artifacts/robustness/resnet18_baseline/abstention_policy.json`
+- `artifacts/robustness/resnet18_baseline/robustness_metrics.json`
+- `artifacts/robustness/resnet18_baseline/test_policy_results.csv`
+- `artifacts/robustness/resnet18_baseline/risk_coverage.json`
+- `artifacts/robustness/resnet18_baseline/risk_coverage_curve.png`
+- [docs/resnet18_robustness.md](docs/resnet18_robustness.md)
+
 ## Training
 
 Run the full baseline:
@@ -489,6 +587,18 @@ Run calibration and uncertainty analysis:
 .venv\Scripts\python.exe scripts\calibrate.py
 ```
 
+Run safe inference for one image:
+
+```powershell
+.venv\Scripts\python.exe scripts\predict.py --image dataset/test/glioma/Te-glTr_0001.jpg
+```
+
+Run the formal robustness and abstention study:
+
+```powershell
+.venv\Scripts\python.exe scripts\evaluate_robustness.py
+```
+
 ## Inspecting Real DataLoaders
 
 To inspect the real manifest-backed MRI dataloaders:
@@ -519,6 +629,8 @@ Current verification commands:
 .venv\Scripts\python.exe scripts\evaluate.py
 .venv\Scripts\python.exe scripts\generate_gradcam.py
 .venv\Scripts\python.exe scripts\calibrate.py
+.venv\Scripts\python.exe scripts\predict.py --image dataset/test/glioma/Te-glTr_0001.jpg
+.venv\Scripts\python.exe scripts\evaluate_robustness.py
 ```
 
 ## Roadmap

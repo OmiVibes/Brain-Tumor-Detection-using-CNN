@@ -1,0 +1,14 @@
+relative_path,true_class,classifier_prediction,raw_confidence,uncertainty_level,ood_score,ood_status,quality_flags,safe_status,decision_reasons
+dataset/test/glioma/Te-gl_0232.jpg,glioma,meningioma,0.9358649849891663,HIGH,34.95037254916478,BORDERLINE,,REVIEW,BORDERLINE_OOD|HIGH_UNCERTAINTY
+dataset/test/meningioma/Te-me_0178.jpg,meningioma,glioma,0.8381338119506836,HIGH,67.77672698702459,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/test/meningioma/Te-me_0226.jpg,meningioma,glioma,0.7972055077552795,HIGH,50.72332431175761,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/glioma/Tr-gl_0024.jpg,glioma,meningioma,0.6436043381690979,HIGH,45.364273463056655,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/glioma/Tr-gl_0676.jpg,glioma,meningioma,0.5188723802566528,HIGH,69.76169234678417,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/glioma/Tr-gl_0975.jpg,glioma,meningioma,0.5438187718391418,HIGH,58.93165778247912,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/glioma/Tr-gl_1181.jpg,glioma,meningioma,0.9563118815422058,HIGH,29.95746629845983,PASS,,REVIEW,HIGH_UNCERTAINTY
+dataset/train/meningioma/Tr-me_0126.jpg,meningioma,pituitary,0.6232842206954956,HIGH,68.8307360334812,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/meningioma/Tr-me_0176.jpg,meningioma,no_tumor,0.4794953465461731,HIGH,73.06502082600662,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/meningioma/Tr-me_0211.jpg,meningioma,no_tumor,0.4794953465461731,HIGH,73.06502082600662,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/meningioma/Tr-me_0366.jpg,meningioma,no_tumor,0.4794953465461731,HIGH,73.06502082600662,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/meningioma/Tr-me_1066.jpg,meningioma,glioma,0.6224426031112671,HIGH,56.74023233489231,FAIL,LOW_CONTRAST_IMAGE,ABSTAIN,OUT_OF_DISTRIBUTION
+dataset/train/meningioma/Tr-me_1268.jpg,meningioma,pituitary,0.9208731055259705,HIGH,52.912987030705644,FAIL,,ABSTAIN,OUT_OF_DISTRIBUTION

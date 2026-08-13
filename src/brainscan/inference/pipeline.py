@@ -89,13 +89,21 @@ class DecisionResult:
 class SafeInferenceResult:
     status: str
     prediction: PredictionResult | None
+    analysis_prediction: PredictionResult | None
     uncertainty: UncertaintyResult | None
     quality: QualityResult | None
     ood: OODResult | None
     decision: DecisionResult
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        return {
+            "status": self.status,
+            "prediction": asdict(self.prediction) if self.prediction is not None else None,
+            "uncertainty": asdict(self.uncertainty) if self.uncertainty is not None else None,
+            "quality": asdict(self.quality) if self.quality is not None else None,
+            "ood": asdict(self.ood) if self.ood is not None else None,
+            "decision": asdict(self.decision),
+        }
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2)
@@ -235,6 +243,7 @@ class BrainScanInferencePipeline:
         return SafeInferenceResult(
             status="ABSTAIN",
             prediction=None,
+            analysis_prediction=None,
             uncertainty=None,
             quality=quality,
             ood=None,
@@ -324,6 +333,7 @@ class BrainScanInferencePipeline:
         return SafeInferenceResult(
             status=abstention.status,
             prediction=public_prediction,
+            analysis_prediction=prediction,
             uncertainty=uncertainty,
             quality=quality_result,
             ood=ood,
