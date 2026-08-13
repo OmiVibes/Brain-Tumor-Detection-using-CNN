@@ -34,3 +34,6 @@ artifacts/explainability/**/original/
 artifacts/explainability/**/heatmap/
 artifacts/explainability/**/overlay/
 artifacts/explainability/**/metadata/
+artifacts/robustness/**/ood_reference.npz
+artifacts/robustness/**/ood_reference.json
+artifacts/robustness/**/quality_thresholds.json
