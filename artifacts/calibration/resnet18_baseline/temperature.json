@@ -1,0 +1,16 @@
+{
+  "temperature": 1.1344318389892578,
+  "fitting_split": "validation",
+  "checkpoint": "artifacts/models/resnet18_baseline_best.pt",
+  "checkpoint_epoch": 9,
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "calibration_method": "temperature_scaling",
+  "validation_nll_before": 0.03792727366089821,
+  "validation_nll_after": 0.03737782686948776,
+  "validation_ece_before": 0.00723400275364709,
+  "validation_ece_after": 0.010085128788249421,
+  "validation_brier_before": 0.020002037286758423,
+  "validation_brier_after": 0.019724294543266296,
+  "git_commit": "3d89931c69c36ff714ce804c7efc05c0c3d03f33",
+  "generated_timestamp_utc": "2026-08-13T12:57:15.370104+00:00"
+}

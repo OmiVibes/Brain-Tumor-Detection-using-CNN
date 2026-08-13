@@ -28,7 +28,7 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 1F - scientifically correct ResNet18 Grad-CAM explainability**
+Current milestone: **Phase 2A - calibration and uncertainty analysis for the frozen ResNet18 baseline**
 
 What is implemented through Phase 1E:
 
@@ -55,10 +55,18 @@ What is implemented in Phase 1F:
 - review-grid generation for correct and incorrect examples
 - unit tests for Grad-CAM behavior and parameter preservation
 
+What is implemented in Phase 2A:
+
+- scalar temperature scaling fitted on `val.csv` only
+- reusable calibration and uncertainty package in `src/brainscan/uncertainty/`
+- ECE, MCE, NLL, multiclass Brier score, entropy, normalized entropy, and top1-top2 margin
+- reliability diagram generation and portable calibration artifacts
+- uncertainty-threshold derivation from the validation distribution
+- error-detection analysis for incorrect predictions
+
 What is intentionally **not** implemented yet:
 
 - model comparison experiments
-- calibration / temperature scaling
 - FastAPI
 - React frontend
 - segmentation
@@ -88,6 +96,8 @@ What is intentionally **not** implemented yet:
 - training orchestration script in `scripts/train.py`
 - scientifically correct ResNet18 Grad-CAM in `src/brainscan/explainability/gradcam.py`
 - explanation generation script in `scripts/generate_gradcam.py`
+- calibration and uncertainty tooling in `src/brainscan/uncertainty/`
+- calibration study script in `scripts/calibrate.py`
 
 ## Current Limitations
 
@@ -396,6 +406,51 @@ Representative explainability artifacts:
 - `artifacts/explainability/resnet18_baseline/summary.json`
 - [docs/resnet18_explainability.md](docs/resnet18_explainability.md)
 
+## Calibration And Uncertainty
+
+Phase 2A adds validation-only scalar temperature scaling and explicit uncertainty diagnostics for the frozen ResNet18 checkpoint.
+
+Learned temperature:
+
+- `T = 1.1344`
+
+Validation metrics:
+
+- ECE before: `0.007234`
+- ECE after: `0.010085`
+- NLL before: `0.037927`
+- NLL after: `0.037378`
+
+Held-out test metrics:
+
+- ECE before: `0.009226`
+- ECE after: `0.010585`
+- accuracy unchanged: `0.9815`
+- macro F1 unchanged: `0.9805`
+
+Important conclusion:
+
+- temperature scaling is implemented and reusable
+- it reduced some high-confidence overconfidence on individual errors
+- it did **not** improve overall ECE on validation or test
+- it therefore should not become the default BrainScanAI probability calibration yet
+
+Available uncertainty diagnostics:
+
+- raw confidence
+- calibrated confidence
+- entropy
+- normalized entropy
+- top1-top2 margin
+
+Calibration artifacts and write-up:
+
+- `artifacts/calibration/resnet18_baseline/temperature.json`
+- `artifacts/calibration/resnet18_baseline/metrics.json`
+- `artifacts/calibration/resnet18_baseline/reliability_before.png`
+- `artifacts/calibration/resnet18_baseline/reliability_after.png`
+- [docs/resnet18_calibration.md](docs/resnet18_calibration.md)
+
 ## Training
 
 Run the full baseline:
@@ -428,6 +483,12 @@ Run Grad-CAM for one specific image:
 .venv\Scripts\python.exe scripts\generate_gradcam.py --image dataset/test/glioma/Te-gl_0232.jpg
 ```
 
+Run calibration and uncertainty analysis:
+
+```powershell
+.venv\Scripts\python.exe scripts\calibrate.py
+```
+
 ## Inspecting Real DataLoaders
 
 To inspect the real manifest-backed MRI dataloaders:
@@ -457,6 +518,7 @@ Current verification commands:
 .venv\Scripts\python.exe scripts\train.py --smoke-test
 .venv\Scripts\python.exe scripts\evaluate.py
 .venv\Scripts\python.exe scripts\generate_gradcam.py
+.venv\Scripts\python.exe scripts\calibrate.py
 ```
 
 ## Roadmap

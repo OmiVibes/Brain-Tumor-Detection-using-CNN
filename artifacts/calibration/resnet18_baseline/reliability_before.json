@@ -1,0 +1,122 @@
+[
+  {
+    "lower_bound": 0.0,
+    "upper_bound": 0.06666667014360428,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.06666667014360428,
+    "upper_bound": 0.13333334028720856,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.13333334028720856,
+    "upper_bound": 0.20000001788139343,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.20000001788139343,
+    "upper_bound": 0.2666666805744171,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.2666666805744171,
+    "upper_bound": 0.3333333432674408,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.3333333432674408,
+    "upper_bound": 0.40000003576278687,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.40000003576278687,
+    "upper_bound": 0.46666669845581055,
+    "sample_count": 0,
+    "mean_confidence": 0.0,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.0
+  },
+  {
+    "lower_bound": 0.46666669845581055,
+    "upper_bound": 0.5333333015441895,
+    "sample_count": 2,
+    "mean_confidence": 0.47949540615081787,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.47949540615081787
+  },
+  {
+    "lower_bound": 0.5333333015441895,
+    "upper_bound": 0.5999999642372131,
+    "sample_count": 1,
+    "mean_confidence": 0.5864393711090088,
+    "empirical_accuracy": 1.0,
+    "calibration_gap": 0.4135606288909912
+  },
+  {
+    "lower_bound": 0.5999999642372131,
+    "upper_bound": 0.6666666269302368,
+    "sample_count": 3,
+    "mean_confidence": 0.6282392144203186,
+    "empirical_accuracy": 0.6666666865348816,
+    "calibration_gap": 0.03842747211456299
+  },
+  {
+    "lower_bound": 0.6666666269302368,
+    "upper_bound": 0.7333333492279053,
+    "sample_count": 4,
+    "mean_confidence": 0.7148261666297913,
+    "empirical_accuracy": 0.75,
+    "calibration_gap": 0.03517383337020874
+  },
+  {
+    "lower_bound": 0.7333333492279053,
+    "upper_bound": 0.7999999523162842,
+    "sample_count": 4,
+    "mean_confidence": 0.765538215637207,
+    "empirical_accuracy": 0.5,
+    "calibration_gap": 0.26553821563720703
+  },
+  {
+    "lower_bound": 0.7999999523162842,
+    "upper_bound": 0.8666666746139526,
+    "sample_count": 6,
+    "mean_confidence": 0.8314935564994812,
+    "empirical_accuracy": 0.6666666865348816,
+    "calibration_gap": 0.1648268699645996
+  },
+  {
+    "lower_bound": 0.8666666746139526,
+    "upper_bound": 0.9333333373069763,
+    "sample_count": 1,
+    "mean_confidence": 0.872283935546875,
+    "empirical_accuracy": 0.0,
+    "calibration_gap": 0.872283935546875
+  },
+  {
+    "lower_bound": 0.9333333373069763,
+    "upper_bound": 1.0,
+    "sample_count": 682,
+    "mean_confidence": 0.9977513551712036,
+    "empirical_accuracy": 0.9985337257385254,
+    "calibration_gap": 0.0007823705673217773
+  }
+]

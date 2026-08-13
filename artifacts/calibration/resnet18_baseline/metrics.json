@@ -1,0 +1,156 @@
+{
+  "checkpoint": "artifacts/models/resnet18_baseline_best.pt",
+  "checkpoint_epoch": 9,
+  "architecture": "resnet18",
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "device_info": {
+    "device_type": "cuda",
+    "device_name": "NVIDIA GeForce GTX 1650",
+    "cuda_available": true,
+    "cuda_runtime": "13.0",
+    "vram_bytes": 4294639616,
+    "vram_gb": 4.0
+  },
+  "calibration_method": "temperature_scaling",
+  "validation_sample_count": 703,
+  "test_sample_count": 702,
+  "temperature": 1.1344318389892578,
+  "fit_result": {
+    "temperature": 1.1344318389892578,
+    "nll_before": 0.03792727366089821,
+    "nll_after": 0.03737782686948776
+  },
+  "validation_before": {
+    "accuracy": 0.9857752489331437,
+    "macro_f1": 0.985834622442677,
+    "ece": 0.00723400275364709,
+    "mce": 0.872283935546875,
+    "nll": 0.03792727366089821,
+    "brier_score": 0.020002037286758423
+  },
+  "validation_after": {
+    "accuracy": 0.9857752489331437,
+    "macro_f1": 0.985834622442677,
+    "ece": 0.010085128788249421,
+    "mce": 0.46367818117141724,
+    "nll": 0.03737782686948776,
+    "brier_score": 0.019724294543266296
+  },
+  "test_before": {
+    "accuracy": 0.9814814814814815,
+    "macro_f1": 0.9805153483136225,
+    "ece": 0.009226015490344448,
+    "mce": 0.48934027552604675,
+    "nll": 0.039185117930173874,
+    "brier_score": 0.02423100546002388
+  },
+  "test_after": {
+    "accuracy": 0.9814814814814815,
+    "macro_f1": 0.9805153483136225,
+    "ece": 0.010584614682740976,
+    "mce": 0.4636782109737396,
+    "nll": 0.03952951356768608,
+    "brier_score": 0.02419210411608219
+  },
+  "argmax_preserved": true,
+  "uncertainty_thresholds": {
+    "entropy_q25": 0.0005596511473413557,
+    "entropy_q75": 0.00797168305143714,
+    "margin_q25": 0.9975114166736603,
+    "margin_q75": 0.9998722672462463,
+    "strategy": "HIGH if normalized_entropy >= entropy_q75 or top1_top2_margin <= margin_q25; LOW if normalized_entropy <= entropy_q25 and top1_top2_margin >= margin_q75; otherwise MEDIUM"
+  },
+  "test_uncertainty_level_counts": {
+    "LOW": 172,
+    "MEDIUM": 346,
+    "HIGH": 184
+  },
+  "uncertainty_by_correctness_raw": {
+    "mean_confidence_correct": 0.9898896813392639,
+    "mean_confidence_incorrect": 0.6799154281616211,
+    "median_confidence_correct": 0.9999115467071533,
+    "median_confidence_incorrect": 0.6232830882072449,
+    "mean_entropy_correct": 0.02728055603802204,
+    "mean_entropy_incorrect": 0.6238451600074768,
+    "median_entropy_correct": 0.0009568166569806635,
+    "median_entropy_incorrect": 0.6651357412338257,
+    "mean_margin_correct": 0.9802265763282776,
+    "mean_margin_incorrect": 0.3941785991191864,
+    "median_margin_correct": 0.9998431205749512,
+    "median_margin_incorrect": 0.24799999594688416
+  },
+  "uncertainty_by_correctness_calibrated": {
+    "mean_confidence_correct": 0.9879482388496399,
+    "mean_confidence_incorrect": 0.6622915267944336,
+    "median_confidence_correct": 0.9997137188911438,
+    "median_confidence_incorrect": 0.6088588237762451,
+    "mean_entropy_correct": 0.03467336669564247,
+    "mean_entropy_incorrect": 0.6558715105056763,
+    "median_entropy_correct": 0.002742888405919075,
+    "median_entropy_incorrect": 0.6754823923110962,
+    "mean_margin_correct": 0.9766558408737183,
+    "mean_margin_incorrect": 0.36416003108024597,
+    "median_margin_correct": 0.9994983077049255,
+    "median_margin_incorrect": 0.21897199749946594
+  },
+  "error_detection_auroc": {
+    "entropy": 0.9859327899966507,
+    "one_minus_calibrated_confidence": 0.9869375907111756
+  },
+  "high_confidence_error_changes": {
+    "incorrect_confidence_ge_090": [
+      {
+        "relative_path": "dataset/train/glioma/Tr-gl_1181.jpg",
+        "true_class": "glioma",
+        "predicted_class": "meningioma",
+        "raw_confidence": 0.9563120007514954,
+        "calibrated_confidence": 0.9377511739730835,
+        "entropy": 0.23835229873657227,
+        "top1_top2_margin": 0.8764657974243164,
+        "true_class_id": 0
+      },
+      {
+        "relative_path": "dataset/test/glioma/Te-gl_0232.jpg",
+        "true_class": "glioma",
+        "predicted_class": "meningioma",
+        "raw_confidence": 0.9358649849891663,
+        "calibrated_confidence": 0.9135311245918274,
+        "entropy": 0.29937922954559326,
+        "top1_top2_margin": 0.8278671503067017,
+        "true_class_id": 0
+      },
+      {
+        "relative_path": "dataset/train/meningioma/Tr-me_1268.jpg",
+        "true_class": "meningioma",
+        "predicted_class": "pituitary",
+        "raw_confidence": 0.9208731055259705,
+        "calibrated_confidence": 0.8962135314941406,
+        "entropy": 0.341680109500885,
+        "top1_top2_margin": 0.7939463257789612,
+        "true_class_id": 1
+      }
+    ],
+    "incorrect_confidence_ge_095": [
+      {
+        "relative_path": "dataset/train/glioma/Tr-gl_1181.jpg",
+        "true_class": "glioma",
+        "predicted_class": "meningioma",
+        "raw_confidence": 0.9563120007514954,
+        "calibrated_confidence": 0.9377511739730835,
+        "entropy": 0.23835229873657227,
+        "top1_top2_margin": 0.8764657974243164,
+        "true_class_id": 0
+      }
+    ]
+  },
+  "reliability_artifacts": {
+    "before_json": "artifacts/calibration/resnet18_baseline/reliability_before.json",
+    "after_json": "artifacts/calibration/resnet18_baseline/reliability_after.json",
+    "before_csv": "artifacts/calibration/resnet18_baseline/reliability_before.csv",
+    "after_csv": "artifacts/calibration/resnet18_baseline/reliability_after.csv",
+    "before_png": "artifacts/calibration/resnet18_baseline/reliability_before.png",
+    "after_png": "artifacts/calibration/resnet18_baseline/reliability_after.png"
+  },
+  "temperature_artifact": "artifacts/calibration/resnet18_baseline/temperature.json",
+  "generated_timestamp_utc": "2026-08-13T12:57:15.370104+00:00"
+}
