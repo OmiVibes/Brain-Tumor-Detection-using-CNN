@@ -26,6 +26,17 @@ def resolve_project_path(path_value: str | Path, project_root: Path | None = Non
     return (root / candidate).resolve()
 
 
+def make_project_relative_path(path_value: str | Path, project_root: Path | None = None) -> str:
+    """Return a repository-relative POSIX path for portable metadata artifacts."""
+    root = (project_root or get_project_root()).resolve()
+    resolved = resolve_project_path(path_value, root)
+    try:
+        relative = resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"Path is outside the project root and cannot be made relative: {resolved}") from exc
+    return relative.as_posix()
+
+
 def _resolve_path_like_values(value: Any, project_root: Path) -> Any:
     if isinstance(value, dict):
         resolved: dict[str, Any] = {}

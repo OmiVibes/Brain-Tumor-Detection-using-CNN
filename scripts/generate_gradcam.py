@@ -18,7 +18,7 @@ if str(SRC_PATH) not in sys.path:
 
 import torch
 
-from brainscan.core.config import load_train_config, resolve_project_path
+from brainscan.core.config import load_train_config, make_project_relative_path, resolve_project_path
 from brainscan.data.constants import CANONICAL_CLASS_NAMES, CANONICAL_CLASS_TO_ID, ID_TO_CANONICAL_CLASS
 from brainscan.data.preprocessing import build_eval_transform
 from brainscan.explainability import (
@@ -209,10 +209,10 @@ def _save_images(bundle: dict[str, object], base_name: str) -> dict[str, str]:
         json.dump(bundle["metadata"], handle, indent=2)  # type: ignore[arg-type]
 
     return {
-        "original": str(original_path),
-        "heatmap": str(heatmap_path),
-        "overlay": str(overlay_path),
-        "metadata": str(metadata_path),
+        "original": make_project_relative_path(original_path),
+        "heatmap": make_project_relative_path(heatmap_path),
+        "overlay": make_project_relative_path(overlay_path),
+        "metadata": make_project_relative_path(metadata_path),
     }
 
 
@@ -383,7 +383,7 @@ def main() -> None:
         "explanation_method": "Grad-CAM",
         "generated_case_count": len(generated_rows),
         "generated_cases": generated_rows,
-        "review_grid": str(resolve_project_path(review_grid_path)),
+        "review_grid": make_project_relative_path(review_grid_path),
         "border_attention_summary": border_summary,
         "target_class_sensitivity": {
             "relative_path": sensitivity_case.relative_path,

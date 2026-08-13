@@ -24,6 +24,7 @@ from brainscan.explainability.gradcam import (  # noqa: E402
     resolve_default_gradcam_target_layer,
 )
 from brainscan.models import build_classifier  # noqa: E402
+from brainscan.core.config import make_project_relative_path  # noqa: E402
 
 
 class TinyConvNet(nn.Module):
@@ -169,6 +170,7 @@ def test_target_class_maps_differ_on_controlled_example(tmp_path) -> None:
     tensor = torch.zeros(1, 3, 24, 24)
     tensor[:, 0, 2:10, 2:10] = 1.0
     tensor[:, 1, 14:22, 14:22] = 1.0
+    tensor.requires_grad_(True)
     bundle_a = generate_gradcam_explanation(
         model=model,
         image_tensor=tensor,
@@ -191,6 +193,16 @@ def test_target_class_maps_differ_on_controlled_example(tmp_path) -> None:
     )
     difference = np.abs(bundle_a["resized_heatmap"] - bundle_b["resized_heatmap"]).mean()
     assert difference > 0.0
+
+
+def test_make_project_relative_path_sanitizes_generated_artifact_paths(tmp_path) -> None:
+    artifact_path = tmp_path / "nested" / "artifact.json"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text("{}", encoding="utf-8")
+
+    relative = make_project_relative_path(artifact_path, project_root=tmp_path)
+
+    assert relative == "nested/artifact.json"
 
 
 def test_no_surrogate_model_instantiated(monkeypatch, tmp_path) -> None:

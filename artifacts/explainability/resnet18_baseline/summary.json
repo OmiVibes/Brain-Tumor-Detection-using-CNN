@@ -14,10 +14,10 @@
       "target_class": "glioma",
       "border_attention_ratio": 0.13208769261837006,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__glioma__Tr-gl_0989.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__glioma__Tr-gl_0989.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__glioma__Tr-gl_0989.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__glioma__Tr-gl_0989.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__glioma__Tr-gl_0989.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__glioma__Tr-gl_0989.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__glioma__Tr-gl_0989.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__glioma__Tr-gl_0989.jpg.json"
       }
     },
     {
@@ -28,10 +28,10 @@
       "target_class": "glioma",
       "border_attention_ratio": 0.11829815804958344,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__glioma__Tr-gl_0123.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__glioma__Tr-gl_0123.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__glioma__Tr-gl_0123.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__glioma__Tr-gl_0123.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__glioma__Tr-gl_0123.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__glioma__Tr-gl_0123.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__glioma__Tr-gl_0123.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__glioma__Tr-gl_0123.jpg.json"
       }
     },
     {
@@ -42,10 +42,10 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.205442413687706,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__meningioma__Tr-me_0252.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__meningioma__Tr-me_0252.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__meningioma__Tr-me_0252.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__meningioma__Tr-me_0252.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__meningioma__Tr-me_0252.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__meningioma__Tr-me_0252.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__meningioma__Tr-me_0252.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__meningioma__Tr-me_0252.jpg.json"
       }
     },
     {
@@ -56,10 +56,10 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.19299718737602234,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__meningioma__Tr-me_0567.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__meningioma__Tr-me_0567.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__meningioma__Tr-me_0567.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__meningioma__Tr-me_0567.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__meningioma__Tr-me_0567.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__meningioma__Tr-me_0567.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__meningioma__Tr-me_0567.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__meningioma__Tr-me_0567.jpg.json"
       }
     },
     {
@@ -70,10 +70,10 @@
       "target_class": "pituitary",
       "border_attention_ratio": 0.10777100175619125,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__pituitary__Tr-pi_1127.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__pituitary__Tr-pi_1127.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__pituitary__Tr-pi_1127.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__pituitary__Tr-pi_1127.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__pituitary__Tr-pi_1127.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__pituitary__Tr-pi_1127.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__pituitary__Tr-pi_1127.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__pituitary__Tr-pi_1127.jpg.json"
       }
     },
     {
@@ -84,10 +84,10 @@
       "target_class": "pituitary",
       "border_attention_ratio": 0.16754862666130066,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__pituitary__Tr-pi_0475.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__pituitary__Tr-pi_0475.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__pituitary__Tr-pi_0475.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__pituitary__Tr-pi_0475.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__pituitary__Tr-pi_0475.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__pituitary__Tr-pi_0475.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__pituitary__Tr-pi_0475.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__pituitary__Tr-pi_0475.jpg.json"
       }
     },
     {
@@ -98,10 +98,10 @@
       "target_class": "no_tumor",
       "border_attention_ratio": 0.1826137751340866,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__test__notumor__Te-no_0216.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__test__notumor__Te-no_0216.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__test__notumor__Te-no_0216.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__test__notumor__Te-no_0216.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__test__notumor__Te-no_0216.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__test__notumor__Te-no_0216.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__test__notumor__Te-no_0216.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__test__notumor__Te-no_0216.jpg.json"
       }
     },
     {
@@ -112,10 +112,10 @@
       "target_class": "no_tumor",
       "border_attention_ratio": 0.20841161906719208,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__notumor__Tr-no_1440.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__notumor__Tr-no_1440.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__notumor__Tr-no_1440.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__notumor__Tr-no_1440.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__notumor__Tr-no_1440.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__notumor__Tr-no_1440.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__notumor__Tr-no_1440.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__notumor__Tr-no_1440.jpg.json"
       }
     },
     {
@@ -126,10 +126,10 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.09048666059970856,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__glioma__Tr-gl_1181.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__glioma__Tr-gl_1181.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__glioma__Tr-gl_1181.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__glioma__Tr-gl_1181.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__glioma__Tr-gl_1181.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__glioma__Tr-gl_1181.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__glioma__Tr-gl_1181.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__glioma__Tr-gl_1181.jpg.json"
       }
     },
     {
@@ -140,10 +140,10 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.06656701117753983,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__test__glioma__Te-gl_0232.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__test__glioma__Te-gl_0232.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__test__glioma__Te-gl_0232.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__test__glioma__Te-gl_0232.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__test__glioma__Te-gl_0232.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__test__glioma__Te-gl_0232.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__test__glioma__Te-gl_0232.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__test__glioma__Te-gl_0232.jpg.json"
       }
     },
     {
@@ -154,10 +154,10 @@
       "target_class": "pituitary",
       "border_attention_ratio": 0.08796225488185883,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__meningioma__Tr-me_1268.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__meningioma__Tr-me_1268.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__meningioma__Tr-me_1268.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__meningioma__Tr-me_1268.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__meningioma__Tr-me_1268.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__meningioma__Tr-me_1268.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__meningioma__Tr-me_1268.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__meningioma__Tr-me_1268.jpg.json"
       }
     },
     {
@@ -168,10 +168,10 @@
       "target_class": "glioma",
       "border_attention_ratio": 0.10087942332029343,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__test__meningioma__Te-me_0178.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__test__meningioma__Te-me_0178.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__test__meningioma__Te-me_0178.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__test__meningioma__Te-me_0178.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__test__meningioma__Te-me_0178.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__test__meningioma__Te-me_0178.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__test__meningioma__Te-me_0178.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__test__meningioma__Te-me_0178.jpg.json"
       }
     },
     {
@@ -182,10 +182,10 @@
       "target_class": "glioma",
       "border_attention_ratio": 0.05208612233400345,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__test__meningioma__Te-me_0226.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__test__meningioma__Te-me_0226.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__test__meningioma__Te-me_0226.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__test__meningioma__Te-me_0226.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__test__meningioma__Te-me_0226.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__test__meningioma__Te-me_0226.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__test__meningioma__Te-me_0226.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__test__meningioma__Te-me_0226.jpg.json"
       }
     },
     {
@@ -196,10 +196,10 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.10231347382068634,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__glioma__Tr-gl_0024.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__glioma__Tr-gl_0024.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__glioma__Tr-gl_0024.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__glioma__Tr-gl_0024.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__glioma__Tr-gl_0024.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__glioma__Tr-gl_0024.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__glioma__Tr-gl_0024.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__glioma__Tr-gl_0024.jpg.json"
       }
     },
     {
@@ -210,10 +210,10 @@
       "target_class": "glioma",
       "border_attention_ratio": 0.10876752436161041,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__meningioma__Tr-me_1066.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__meningioma__Tr-me_1066.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__meningioma__Tr-me_1066.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__meningioma__Tr-me_1066.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__meningioma__Tr-me_1066.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__meningioma__Tr-me_1066.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__meningioma__Tr-me_1066.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__meningioma__Tr-me_1066.jpg.json"
       }
     },
     {
@@ -224,10 +224,10 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.09959468990564346,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__glioma__Tr-gl_0975.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__glioma__Tr-gl_0975.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__glioma__Tr-gl_0975.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__glioma__Tr-gl_0975.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__glioma__Tr-gl_0975.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__glioma__Tr-gl_0975.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__glioma__Tr-gl_0975.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__glioma__Tr-gl_0975.jpg.json"
       }
     },
     {
@@ -238,14 +238,14 @@
       "target_class": "meningioma",
       "border_attention_ratio": 0.06966300308704376,
       "output_paths": {
-        "original": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\original\\dataset__train__glioma__Tr-gl_0676.jpg_original.png",
-        "heatmap": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\heatmap\\dataset__train__glioma__Tr-gl_0676.jpg_heatmap.png",
-        "overlay": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\overlay\\dataset__train__glioma__Tr-gl_0676.jpg_overlay.png",
-        "metadata": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\metadata\\dataset__train__glioma__Tr-gl_0676.jpg.json"
+        "original": "artifacts/explainability/resnet18_baseline/original/dataset__train__glioma__Tr-gl_0676.jpg_original.png",
+        "heatmap": "artifacts/explainability/resnet18_baseline/heatmap/dataset__train__glioma__Tr-gl_0676.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/resnet18_baseline/overlay/dataset__train__glioma__Tr-gl_0676.jpg_overlay.png",
+        "metadata": "artifacts/explainability/resnet18_baseline/metadata/dataset__train__glioma__Tr-gl_0676.jpg.json"
       }
     }
   ],
-  "review_grid": "D:\\Notes\\Degree\\Projects\\Brain Tumor Detection Using CNN\\artifacts\\explainability\\resnet18_baseline\\review_grid.png",
+  "review_grid": "artifacts/explainability/resnet18_baseline/review_grid.png",
   "border_attention_summary": {
     "mean_border_attention_ratio": 0.13825058250071168,
     "mean_border_attention_ratio_correct": 0.13978497043717653,
