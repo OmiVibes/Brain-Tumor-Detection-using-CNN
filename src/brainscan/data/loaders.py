@@ -13,11 +13,11 @@ from brainscan.data.dataset import BrainMRIDataset
 from brainscan.data.preprocessing import build_eval_transform, build_train_transform
 
 
-def create_datasets(
-    config_path: str | Path = "configs/train.yaml",
+def create_datasets_from_config(
+    config: dict[str, object],
+    *,
     include_test: bool = True,
 ) -> dict[str, BrainMRIDataset]:
-    config = load_train_config(config_path)
     image_size = config["training"]["image_size"]
     split_manifest_dir = resolve_project_path(config["dataset"]["split_manifest_dir"])
 
@@ -41,12 +41,20 @@ def create_datasets(
     return datasets
 
 
-def create_dataloaders(
+def create_datasets(
     config_path: str | Path = "configs/train.yaml",
     include_test: bool = True,
-) -> dict[str, DataLoader]:
+) -> dict[str, BrainMRIDataset]:
     config = load_train_config(config_path)
-    datasets = create_datasets(config_path, include_test=include_test)
+    return create_datasets_from_config(config, include_test=include_test)
+
+
+def create_dataloaders_from_config(
+    config: dict[str, object],
+    *,
+    include_test: bool = True,
+) -> dict[str, DataLoader]:
+    datasets = create_datasets_from_config(config, include_test=include_test)
     batch_size = int(config["training"]["batch_size"])
     num_workers = int(config["training"]["num_workers"])
     seed = int(config["training"]["seed"])
@@ -83,8 +91,20 @@ def create_dataloaders(
     return loaders
 
 
+def create_dataloaders(
+    config_path: str | Path = "configs/train.yaml",
+    include_test: bool = True,
+) -> dict[str, DataLoader]:
+    config = load_train_config(config_path)
+    return create_dataloaders_from_config(config, include_test=include_test)
+
+
 def create_train_val_dataloaders(config_path: str | Path = "configs/train.yaml") -> dict[str, DataLoader]:
     return create_dataloaders(config_path, include_test=False)
+
+
+def create_train_val_dataloaders_from_config(config: dict[str, object]) -> dict[str, DataLoader]:
+    return create_dataloaders_from_config(config, include_test=False)
 
 
 def create_test_dataloader(config_path: str | Path = "configs/train.yaml") -> DataLoader:
