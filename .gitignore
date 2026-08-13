@@ -30,3 +30,7 @@ artifacts/evaluation/**/classification_report.txt
 artifacts/evaluation/**/confusion_matrix.png
 artifacts/evaluation/**/roc_curves.png
 artifacts/evaluation/**/pr_curves.png
+artifacts/explainability/**/original/
+artifacts/explainability/**/heatmap/
+artifacts/explainability/**/overlay/
+artifacts/explainability/**/metadata/
