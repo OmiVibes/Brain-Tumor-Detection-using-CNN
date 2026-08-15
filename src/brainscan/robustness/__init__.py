@@ -29,9 +29,11 @@ from .ood import (
     save_ood_reference,
 )
 from .quality import QualityMetrics, compute_quality_metrics, derive_quality_thresholds, detect_quality_flags
+from brainscan.models import ArchitectureFeatureExtractor
 
 __all__ = [
     "AbstentionDecision",
+    "ArchitectureFeatureExtractor",
     "ImageValidationResult",
     "OODReference",
     "QualityMetrics",

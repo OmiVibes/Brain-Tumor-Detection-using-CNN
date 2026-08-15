@@ -12,6 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from brainscan.models import build_classifier
+from brainscan.models.introspection import ArchitectureFeatureExtractor
 from brainscan.robustness.ood import (
     OODReference,
     ResNet18FeatureExtractor,
@@ -48,11 +49,53 @@ def test_feature_extractor_uses_same_resnet18() -> None:
     assert extractor.model is model
 
 
+def test_densenet_feature_extractor_output_shape() -> None:
+    model = build_classifier("densenet121", 4, pretrained=False)
+    extractor = ArchitectureFeatureExtractor(model, "densenet121")
+    features = extractor(torch.rand(2, 3, 224, 224))
+    assert tuple(features.shape) == (2, 1024)
+
+
+def test_densenet_feature_extractor_matches_classifier_input_hook() -> None:
+    model = build_classifier("densenet121", 4, pretrained=False)
+    model.eval()
+    extractor = ArchitectureFeatureExtractor(model, "densenet121")
+    captured: dict[str, torch.Tensor] = {}
+
+    def _hook(_module, inputs):
+        captured["classifier_input"] = inputs[0].detach().clone()
+
+    handle = model.classifier.register_forward_pre_hook(_hook)
+    try:
+        sample = torch.rand(1, 3, 224, 224)
+        with torch.inference_mode():
+            _ = model(sample)
+            extracted = extractor(sample)
+        assert torch.allclose(captured["classifier_input"], extracted, atol=1e-6, rtol=1e-5)
+    finally:
+        handle.remove()
+
+
 def test_classifier_weights_unchanged_during_feature_extraction() -> None:
     model = build_classifier("resnet18", 4, pretrained=False)
     before = deepcopy(model.state_dict())
     loader = DataLoader(DummyFeatureDataset("train"), batch_size=2, shuffle=False)
     extract_features_from_dataloader(model, loader, torch.device("cpu"), expected_split="train")
+    after = model.state_dict()
+    assert all(torch.equal(before[name], after[name]) for name in before)
+
+
+def test_densenet_classifier_weights_unchanged_during_feature_extraction() -> None:
+    model = build_classifier("densenet121", 4, pretrained=False)
+    before = deepcopy(model.state_dict())
+    loader = DataLoader(DummyFeatureDataset("train"), batch_size=2, shuffle=False)
+    extract_features_from_dataloader(
+        model,
+        loader,
+        torch.device("cpu"),
+        expected_split="train",
+        architecture="densenet121",
+    )
     after = model.state_dict()
     assert all(torch.equal(before[name], after[name]) for name in before)
 

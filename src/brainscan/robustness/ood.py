@@ -1,4 +1,4 @@
-"""Penultimate-feature OOD reference and scoring for BrainScanAI."""
+"""Penultimate-feature OOD reference and scoring for supported BrainScanAI backbones."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 
 from brainscan.core.config import make_project_relative_path, resolve_project_path
 from brainscan.data.constants import CANONICAL_CLASS_NAMES
+from brainscan.models import ArchitectureFeatureExtractor
 
 
 @dataclass(frozen=True)
@@ -33,29 +34,11 @@ class OODReference:
     validation_sample_count: int
 
 
-class ResNet18FeatureExtractor(nn.Module):
-    """Extract penultimate pooled features from the same frozen ResNet18 classifier."""
+class ResNet18FeatureExtractor(ArchitectureFeatureExtractor):
+    """Backward-compatible ResNet18 feature extractor alias."""
 
     def __init__(self, model: nn.Module) -> None:
-        super().__init__()
-        if not hasattr(model, "conv1") or not hasattr(model, "fc"):
-            raise ValueError("Expected a torchvision-style ResNet18 classifier.")
-        self.model = model
-        self.feature_layer_name = "avgpool"
-        self.feature_dimension = int(model.fc.in_features)
-
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        x = self.model.conv1(inputs)
-        x = self.model.bn1(x)
-        x = self.model.relu(x)
-        x = self.model.maxpool(x)
-        x = self.model.layer1(x)
-        x = self.model.layer2(x)
-        x = self.model.layer3(x)
-        x = self.model.layer4(x)
-        x = self.model.avgpool(x)
-        features = torch.flatten(x, 1)
-        return features
+        super().__init__(model, "resnet18")
 
 
 def extract_features_from_dataloader(
@@ -64,6 +47,7 @@ def extract_features_from_dataloader(
     device: torch.device,
     *,
     expected_split: str,
+    architecture: str = "resnet18",
 ) -> dict[str, object]:
     """Collect frozen penultimate-layer features from one manifest-backed split."""
     dataset = getattr(dataloader, "dataset", None)
@@ -77,7 +61,7 @@ def extract_features_from_dataloader(
             f"Expected only '{expected_split}' records for feature extraction, found {sorted(observed_splits)}."
         )
 
-    extractor = ResNet18FeatureExtractor(model).to(device)
+    extractor = ArchitectureFeatureExtractor(model, architecture).to(device)
     extractor.eval()
     model.eval()
 

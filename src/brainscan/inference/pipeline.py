@@ -19,7 +19,7 @@ from brainscan.data import (
     build_eval_transform,
 )
 from brainscan.evaluation.classification import verify_checkpoint_metadata
-from brainscan.models import build_classifier
+from brainscan.models import ArchitectureFeatureExtractor, build_classifier
 from brainscan.robustness import (
     compute_min_diagonal_mahalanobis_scores,
     compute_quality_metrics,
@@ -35,7 +35,6 @@ from brainscan.uncertainty.metrics import (
     softmax_probabilities_from_logits,
     top1_top2_margin,
 )
-from brainscan.robustness.ood import ResNet18FeatureExtractor
 
 
 DEFAULT_CHECKPOINT_PATH = Path("artifacts/models/resnet18_baseline_best.pt")
@@ -140,8 +139,9 @@ class BrainScanInferencePipeline:
             self.ood_reference_json_path,
         )
 
+        self.active_architecture = str(self.config["model"]["architecture"])
         self.model = build_classifier(
-            architecture=str(self.config["model"]["architecture"]),
+            architecture=self.active_architecture,
             num_classes=int(self.config["model"]["num_classes"]),
             pretrained=False,
         )
@@ -155,7 +155,7 @@ class BrainScanInferencePipeline:
         self.model.eval()
         for parameter in self.model.parameters():
             parameter.requires_grad_(False)
-        self.feature_extractor = ResNet18FeatureExtractor(self.model).to(self.device)
+        self.feature_extractor = ArchitectureFeatureExtractor(self.model, self.active_architecture).to(self.device)
         self.feature_extractor.eval()
         self.transform = build_eval_transform(self.config["training"]["image_size"])
         self._verify_artifact_consistency(checkpoint_metadata)

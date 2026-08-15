@@ -87,6 +87,13 @@ def test_target_layer_resolves_correctly_for_resnet18() -> None:
     assert isinstance(target_layer, nn.Conv2d)
 
 
+def test_target_layer_resolves_correctly_for_densenet121() -> None:
+    model = build_classifier("densenet121", 4, pretrained=False)
+    target_layer, target_layer_name = resolve_default_gradcam_target_layer(model, "densenet121")
+    assert target_layer_name == "features.denseblock4.denselayer16.conv2"
+    assert isinstance(target_layer, nn.Conv2d)
+
+
 def test_gradcam_output_shape_and_normalization() -> None:
     model = TinyConvNet()
     target_layer = model.features[2]

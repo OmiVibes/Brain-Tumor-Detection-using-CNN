@@ -1,4 +1,4 @@
-"""Scientifically correct Grad-CAM for the BrainScanAI ResNet18 baseline."""
+"""Scientifically correct Grad-CAM for supported BrainScanAI backbones."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from torch import Tensor, nn
 from brainscan.core.config import resolve_project_path
 from brainscan.data.constants import CANONICAL_CLASS_NAMES, ID_TO_CANONICAL_CLASS
 from brainscan.data.preprocessing import IMAGENET_MEAN, IMAGENET_STD
+from brainscan.models import resolve_gradcam_target_layer
 
 
 @dataclass
@@ -139,16 +140,7 @@ class GradCAM:
 
 def resolve_default_gradcam_target_layer(model: nn.Module, architecture: str = "resnet18") -> tuple[nn.Module, str]:
     """Resolve the verified default Grad-CAM target layer for the supported model."""
-    if architecture.lower() != "resnet18":
-        raise ValueError(f"Unsupported Grad-CAM architecture '{architecture}'.")
-
-    if not hasattr(model, "layer4"):
-        raise ValueError("ResNet18 model is missing layer4; cannot resolve Grad-CAM target layer.")
-
-    target_layer = model.layer4[-1].conv2
-    if not isinstance(target_layer, nn.Conv2d):
-        raise ValueError("Resolved Grad-CAM target layer is not a convolutional layer.")
-    return target_layer, "layer4[-1].conv2"
+    return resolve_gradcam_target_layer(model, architecture)
 
 
 def de_normalize_image_tensor(image_tensor: Tensor) -> Tensor:
