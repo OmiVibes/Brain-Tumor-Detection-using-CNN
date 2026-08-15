@@ -97,6 +97,7 @@ def build_diagonal_mahalanobis_reference(
     train_labels: torch.Tensor,
     validation_features: torch.Tensor,
     *,
+    feature_layer: str = "avgpool",
     warning_threshold_quantile: float = 0.90,
     threshold_quantile: float = 0.95,
 ) -> tuple[OODReference, np.ndarray]:
@@ -136,7 +137,7 @@ def build_diagonal_mahalanobis_reference(
     threshold = float(np.quantile(validation_scores, threshold_quantile))
 
     reference = OODReference(
-        feature_layer="avgpool",
+        feature_layer=feature_layer,
         feature_dimension=feature_dimension,
         class_order=tuple(CANONICAL_CLASS_NAMES),
         class_centroids=centroid_array,

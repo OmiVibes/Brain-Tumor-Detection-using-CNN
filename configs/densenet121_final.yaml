@@ -1,0 +1,52 @@
+training:
+  seed: 42
+  image_size: [224, 224]
+  batch_size: 8
+  epochs: 20
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  num_workers: 0
+  mixed_precision: false
+  early_stopping_patience: 5
+
+dataset:
+  root: dataset
+  train_dir: dataset/train
+  test_dir: dataset/test
+  split_manifest_dir: data/splits
+  split_seed: 42
+  physical_class_folders:
+    - glioma
+    - meningioma
+    - notumor
+    - pituitary
+  canonical_class_names:
+    - glioma
+    - meningioma
+    - pituitary
+    - no_tumor
+
+model:
+  architecture: densenet121
+  num_classes: 4
+  pretrained: false
+
+optimizer:
+  name: adamw
+
+scheduler:
+  name: reduce_on_plateau
+  mode: max
+  factor: 0.5
+  patience: 2
+  min_lr: 0.000001
+
+checkpoint:
+  monitor: val_macro_f1
+  mode: max
+  model_dir: artifacts/models/comparison/densenet121_seed42
+  training_dir: artifacts/training/comparison/densenet121_seed42
+  best_filename: best.pt
+  last_filename: last.pt
+  history_json: history.json
+  history_csv: history.csv

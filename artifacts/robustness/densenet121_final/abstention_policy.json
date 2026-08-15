@@ -1,0 +1,69 @@
+{
+  "policy_version": "phase2d_densenet121_v1",
+  "checkpoint": "artifacts/models/comparison/densenet121_seed42/best.pt",
+  "checkpoint_epoch": 13,
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "architecture": "densenet121",
+  "feature_layer": "features.norm5 -> relu -> adaptive_avg_pool2d",
+  "feature_dimension": 1024,
+  "ood_method": "class_conditional_diagonal_mahalanobis",
+  "ood_thresholds": {
+    "warning_threshold": 40.42926715460869,
+    "warning_threshold_quantile": 0.9,
+    "warning_threshold_derivation": "validation 90th percentile of min-class distance",
+    "fail_threshold": 47.462856520595494,
+    "fail_threshold_quantile": 0.95,
+    "fail_threshold_derivation": "validation 95th percentile of min-class distance"
+  },
+  "quality_thresholds": {
+    "brightness_mean_low": 20.21359329223633,
+    "brightness_mean_high": 107.88847351074219,
+    "contrast_std_low": 27.72160530090332,
+    "blur_laplacian_variance_low": 18.67102966308594,
+    "near_black_ratio_high": 0.7249761788504465,
+    "near_white_ratio_high": 0.09226874461361678,
+    "dynamic_range_low": 216.0,
+    "low_information_dynamic_range": 5.0,
+    "low_information_contrast_std": 2.0,
+    "derivation": "brightness low/high = validation 1st/99th percentiles; contrast, blur, dynamic range low = validation 1st percentile; near-black and near-white high = validation 99th percentile; low-information thresholds = conservative min(validation 0.5th percentile, fixed ceiling)"
+  },
+  "quality_thresholds_source": {
+    "derivation": "reused existing data-derived thresholds from train + validation image statistics",
+    "reuse_note": "Quality thresholds were reused because they depend only on train/validation image statistics, not on classifier architecture.",
+    "source_artifact": "artifacts/robustness/resnet18_baseline/quality_thresholds.json"
+  },
+  "uncertainty_thresholds": {
+    "entropy_q25": 9.024162409332348e-06,
+    "entropy_q75": 0.0005972670041956007,
+    "margin_q25": 0.9998575448989868,
+    "margin_q75": 0.9999985694885254,
+    "strategy": "HIGH if normalized_entropy >= entropy_q75 or top1_top2_margin <= margin_q25; LOW if normalized_entropy <= entropy_q25 and top1_top2_margin >= margin_q75; otherwise MEDIUM"
+  },
+  "probability_mode": "calibrated",
+  "decision_rules": {
+    "abstain": [
+      "invalid_or_corrupt_input",
+      "LOW_INFORMATION_IMAGE",
+      "OOD status == FAIL"
+    ],
+    "review": [
+      "OOD status == BORDERLINE",
+      "quality warning flags present",
+      "uncertainty level in {MEDIUM, HIGH}"
+    ],
+    "accept": [
+      "validation passes",
+      "no low-information flag",
+      "OOD status == PASS",
+      "uncertainty level == LOW",
+      "no quality warnings"
+    ]
+  },
+  "threshold_derivation_source": {
+    "ood": "validation only",
+    "quality": "train + validation only",
+    "uncertainty": "validation only"
+  },
+  "generated_timestamp_utc": "2026-08-15T19:57:29.372032+00:00",
+  "git_commit": "3b58719c4405ba069cdd497897b73bdfc5d93c19"
+}

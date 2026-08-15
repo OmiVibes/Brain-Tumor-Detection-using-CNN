@@ -1,0 +1,134 @@
+{
+  "checkpoint": "artifacts/models/comparison/densenet121_seed42/best.pt",
+  "checkpoint_epoch": 13,
+  "architecture": "densenet121",
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "device_info": {
+    "device_type": "cuda",
+    "device_name": "NVIDIA GeForce GTX 1650",
+    "cuda_available": true,
+    "cuda_runtime": "13.0",
+    "vram_bytes": 4294639616,
+    "vram_gb": 4.0
+  },
+  "calibration_method": "temperature_scaling",
+  "validation_sample_count": 703,
+  "test_sample_count": 702,
+  "temperature": 0.862147331237793,
+  "fit_result": {
+    "temperature": 0.862147331237793,
+    "nll_before": 0.018060727044939995,
+    "nll_after": 0.017712755128741264
+  },
+  "validation_before": {
+    "accuracy": 0.9943100995732574,
+    "macro_f1": 0.9944200759418182,
+    "ece": 0.004601531228842811,
+    "mce": 0.3476991653442383,
+    "nll": 0.018060727044939995,
+    "brier_score": 0.009457512758672237
+  },
+  "validation_after": {
+    "accuracy": 0.9943100995732574,
+    "macro_f1": 0.9944200759418182,
+    "ece": 0.0042108394004203185,
+    "mce": 0.281915545463562,
+    "nll": 0.017712755128741264,
+    "brier_score": 0.009293674491345882
+  },
+  "test_before": {
+    "accuracy": 0.9928774928774928,
+    "macro_f1": 0.9924979602209649,
+    "ece": 0.005982024717195082,
+    "mce": 0.5455107688903809,
+    "nll": 0.018250033259391785,
+    "brier_score": 0.009849722497165203
+  },
+  "test_after": {
+    "accuracy": 0.9928774928774928,
+    "macro_f1": 0.9924979602209649,
+    "ece": 0.00501760437108173,
+    "mce": 0.564804196357727,
+    "nll": 0.018494244664907455,
+    "brier_score": 0.010014031082391739
+  },
+  "argmax_preserved": true,
+  "default_probability_mode": "calibrated",
+  "default_probability_rationale": "Calibrated probabilities were kept as default because validation ECE, NLL, and Brier score all improved or stayed equal.",
+  "uncertainty_threshold_source": "calibrated validation probabilities only",
+  "uncertainty_thresholds": {
+    "entropy_q25": 9.024162409332348e-06,
+    "entropy_q75": 0.0005972670041956007,
+    "margin_q25": 0.9998575448989868,
+    "margin_q75": 0.9999985694885254,
+    "strategy": "HIGH if normalized_entropy >= entropy_q75 or top1_top2_margin <= margin_q25; LOW if normalized_entropy <= entropy_q25 and top1_top2_margin >= margin_q75; otherwise MEDIUM"
+  },
+  "test_uncertainty_level_counts": {
+    "LOW": 172,
+    "MEDIUM": 364,
+    "HIGH": 166
+  },
+  "uncertainty_by_correctness_raw": {
+    "mean_confidence_correct": 0.9959833025932312,
+    "mean_confidence_incorrect": 0.648309588432312,
+    "median_confidence_correct": 0.9999563694000244,
+    "median_confidence_incorrect": 0.5574821829795837,
+    "mean_entropy_correct": 0.014028730802237988,
+    "mean_entropy_incorrect": 0.7257782816886902,
+    "median_entropy_correct": 0.0005154269165359437,
+    "median_entropy_incorrect": 0.695835530757904,
+    "mean_margin_correct": 0.9923207759857178,
+    "mean_margin_incorrect": 0.36658385396003723,
+    "median_margin_correct": 0.9999217987060547,
+    "median_margin_incorrect": 0.21292680501937866
+  },
+  "uncertainty_by_correctness_calibrated": {
+    "mean_confidence_correct": 0.9970494508743286,
+    "mean_confidence_incorrect": 0.6720237731933594,
+    "median_confidence_correct": 0.9999918937683105,
+    "median_confidence_incorrect": 0.5904500484466553,
+    "mean_entropy_correct": 0.009877308271825314,
+    "mean_entropy_incorrect": 0.6659044027328491,
+    "median_entropy_correct": 0.00010557386121945456,
+    "median_entropy_incorrect": 0.6919333934783936,
+    "mean_margin_correct": 0.9943119883537292,
+    "mean_margin_incorrect": 0.4009629786014557,
+    "median_margin_correct": 0.9999853372573853,
+    "median_margin_incorrect": 0.2525426149368286
+  },
+  "error_detection_auroc": {
+    "raw_entropy": 0.9965566714490675,
+    "raw_one_minus_confidence": 0.9965566714490675,
+    "calibrated_entropy": 0.9968436154949785,
+    "calibrated_one_minus_confidence": 0.9954088952654232
+  },
+  "selected_error_detection_auroc": {
+    "entropy": 0.9968436154949785,
+    "one_minus_confidence": 0.9954088952654232
+  },
+  "high_confidence_error_changes": {
+    "incorrect_confidence_ge_090": [
+      {
+        "relative_path": "dataset/train/meningioma/Tr-me_1336.jpg",
+        "true_class": "meningioma",
+        "predicted_class": "pituitary",
+        "raw_confidence": 0.9208653569221497,
+        "calibrated_confidence": 0.9479641914367676,
+        "entropy": 0.2201003134250641,
+        "top1_top2_margin": 0.8999135494232178,
+        "true_class_id": 1
+      }
+    ],
+    "incorrect_confidence_ge_095": []
+  },
+  "reliability_artifacts": {
+    "before_json": "artifacts/calibration/densenet121_final/reliability_before.json",
+    "after_json": "artifacts/calibration/densenet121_final/reliability_after.json",
+    "before_csv": "artifacts/calibration/densenet121_final/reliability_before.csv",
+    "after_csv": "artifacts/calibration/densenet121_final/reliability_after.csv",
+    "before_png": "artifacts/calibration/densenet121_final/reliability_before.png",
+    "after_png": "artifacts/calibration/densenet121_final/reliability_after.png"
+  },
+  "temperature_artifact": "artifacts/calibration/densenet121_final/temperature.json",
+  "generated_timestamp_utc": "2026-08-15T19:52:49.883356+00:00"
+}

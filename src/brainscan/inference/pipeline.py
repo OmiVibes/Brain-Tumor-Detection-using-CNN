@@ -29,6 +29,7 @@ from brainscan.robustness import (
     validate_image_file,
 )
 from brainscan.training import load_checkpoint, load_dataset_fingerprint, resolve_device
+from brainscan.uncertainty import load_temperature_artifact
 from brainscan.uncertainty.metrics import (
     assign_uncertainty_levels,
     predictive_entropy,
@@ -42,7 +43,6 @@ DEFAULT_OOD_REFERENCE_NPZ_PATH = Path("artifacts/robustness/resnet18_baseline/oo
 DEFAULT_OOD_REFERENCE_JSON_PATH = Path("artifacts/robustness/resnet18_baseline/ood_reference.json")
 DEFAULT_QUALITY_THRESHOLDS_PATH = Path("artifacts/robustness/resnet18_baseline/quality_thresholds.json")
 DEFAULT_UNCERTAINTY_METRICS_PATH = Path("artifacts/calibration/resnet18_baseline/metrics.json")
-
 
 @dataclass(frozen=True)
 class PredictionResult:
@@ -120,6 +120,7 @@ class BrainScanInferencePipeline:
         ood_reference_json_path: str | Path = DEFAULT_OOD_REFERENCE_JSON_PATH,
         quality_thresholds_path: str | Path = DEFAULT_QUALITY_THRESHOLDS_PATH,
         uncertainty_metrics_path: str | Path = DEFAULT_UNCERTAINTY_METRICS_PATH,
+        temperature_artifact_path: str | Path | None = None,
         prefer_cuda: bool = True,
     ) -> None:
         self.config = load_train_config(config_path)
@@ -128,16 +129,27 @@ class BrainScanInferencePipeline:
         self.ood_reference_json_path = Path(ood_reference_json_path)
         self.quality_thresholds_path = Path(quality_thresholds_path)
         self.uncertainty_metrics_path = Path(uncertainty_metrics_path)
+        self.temperature_artifact_path = (
+            Path(temperature_artifact_path)
+            if temperature_artifact_path is not None
+            else self.uncertainty_metrics_path.with_name("temperature.json")
+        )
 
         self.dataset_fingerprint = str(load_dataset_fingerprint()["dataset_fingerprint"])
         self.uncertainty_metrics = self._load_json(self.uncertainty_metrics_path)
         self.uncertainty_thresholds = dict(self.uncertainty_metrics["uncertainty_thresholds"])
+        self.default_probability_mode = str(self.uncertainty_metrics.get("default_probability_mode", "raw"))
         self.quality_payload = self._load_json(self.quality_thresholds_path)
         self.quality_thresholds = dict(self.quality_payload["thresholds"])
         self.ood_reference, self.ood_metadata = load_ood_reference(
             self.ood_reference_npz_path,
             self.ood_reference_json_path,
         )
+        self.temperature_artifact = None
+        self.temperature = None
+        if self.default_probability_mode == "calibrated":
+            self.temperature_artifact = load_temperature_artifact(self.temperature_artifact_path)
+            self.temperature = float(self.temperature_artifact["temperature"])
 
         self.active_architecture = str(self.config["model"]["architecture"])
         self.model = build_classifier(
@@ -149,6 +161,9 @@ class BrainScanInferencePipeline:
         checkpoint_metadata = verify_checkpoint_metadata(
             self.checkpoint,
             expected_dataset_fingerprint=self.dataset_fingerprint,
+            expected_architecture=self.active_architecture,
+            expected_epoch=int(self.checkpoint["epoch"]),
+            expected_image_size=list(self.config["training"]["image_size"]),
         )
         self.device, self.device_info = resolve_device(prefer_cuda=prefer_cuda)
         self.model.to(self.device)
@@ -210,6 +225,15 @@ class BrainScanInferencePipeline:
             raise ValueError("Quality-threshold checkpoint epoch does not match the frozen checkpoint.")
         if int(self.uncertainty_metrics["checkpoint_epoch"]) != expected_epoch:
             raise ValueError("Uncertainty artifact checkpoint epoch does not match the frozen checkpoint.")
+        if self.temperature_artifact is not None:
+            if str(self.temperature_artifact["dataset_fingerprint"]) != self.dataset_fingerprint:
+                raise ValueError("Temperature artifact dataset fingerprint does not match the frozen checkpoint.")
+            if str(self.temperature_artifact["checkpoint"]) != expected_checkpoint:
+                raise ValueError("Temperature artifact checkpoint path does not match the frozen checkpoint.")
+            if int(self.temperature_artifact["checkpoint_epoch"]) != expected_epoch:
+                raise ValueError("Temperature artifact checkpoint epoch does not match the frozen checkpoint.")
+            if str(self.temperature_artifact.get("architecture", expected_architecture)) != expected_architecture:
+                raise ValueError("Temperature artifact architecture does not match the frozen checkpoint.")
 
         if str(self.ood_metadata["feature_layer"]) != self.feature_extractor.feature_layer_name:
             raise ValueError("OOD reference feature layer does not match the active feature extractor.")
@@ -284,12 +308,17 @@ class BrainScanInferencePipeline:
             logits = self.model(input_tensor)
             features = self.feature_extractor(input_tensor)
 
-        probabilities = softmax_probabilities_from_logits(logits)
-        predicted_class_id = int(probabilities.argmax(dim=1).item())
-        raw_confidence = float(probabilities.max(dim=1).values.item())
-        entropy = float(predictive_entropy(probabilities).item())
-        normalized_entropy = float(predictive_entropy(probabilities, normalize=True).item())
-        margin = float(top1_top2_margin(probabilities).item())
+        raw_probabilities = softmax_probabilities_from_logits(logits)
+        uncertainty_probabilities = raw_probabilities
+        if self.default_probability_mode == "calibrated":
+            assert self.temperature is not None
+            uncertainty_probabilities = softmax_probabilities_from_logits(logits / self.temperature)
+
+        predicted_class_id = int(raw_probabilities.argmax(dim=1).item())
+        raw_confidence = float(raw_probabilities.max(dim=1).values.item())
+        entropy = float(predictive_entropy(uncertainty_probabilities).item())
+        normalized_entropy = float(predictive_entropy(uncertainty_probabilities, normalize=True).item())
+        margin = float(top1_top2_margin(uncertainty_probabilities).item())
         uncertainty_level = assign_uncertainty_levels(
             [normalized_entropy],
             [margin],

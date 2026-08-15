@@ -178,6 +178,9 @@ def test_frozen_policy_artifact_serialization() -> None:
             checkpoint_epoch=9,
             dataset_fingerprint="abc123",
             ood_metadata={
+                "architecture": "resnet18",
+                "feature_layer": "avgpool",
+                "feature_dimension": 512,
                 "ood_method": "class_conditional_diagonal_mahalanobis",
                 "warning_threshold": 1.0,
                 "warning_threshold_quantile": 0.9,
@@ -187,13 +190,21 @@ def test_frozen_policy_artifact_serialization() -> None:
                 "threshold_derivation": "validation 95th percentile",
             },
             quality_payload={"thresholds": {"low_information_dynamic_range": 5.0}},
-            uncertainty_metrics={"uncertainty_thresholds": {"entropy_q75": 0.2}},
+            uncertainty_metrics={
+                "uncertainty_thresholds": {"entropy_q75": 0.2},
+                "default_probability_mode": "raw",
+            },
             git_commit="deadbeef",
             output_path=artifact_dir / "abstention_policy.json",
         )
         assert payload["checkpoint"] == "artifacts/models/resnet18_baseline_best.pt"
+        assert payload["architecture"] == "resnet18"
+        assert payload["feature_layer"] == "avgpool"
+        assert payload["feature_dimension"] == 512
+        assert payload["probability_mode"] == "raw"
         saved = json.loads(path.read_text(encoding="utf-8"))
         assert saved["dataset_fingerprint"] == "abc123"
+        assert saved["threshold_derivation_source"]["uncertainty"] == "validation only"
         assert not Path(str(saved["checkpoint"])).is_absolute()
     finally:
         shutil.rmtree(artifact_dir, ignore_errors=True)

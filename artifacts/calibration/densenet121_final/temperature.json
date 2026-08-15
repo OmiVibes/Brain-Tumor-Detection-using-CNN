@@ -1,0 +1,19 @@
+{
+  "temperature": 0.862147331237793,
+  "fitting_split": "validation",
+  "checkpoint": "artifacts/models/comparison/densenet121_seed42/best.pt",
+  "checkpoint_epoch": 13,
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "calibration_method": "temperature_scaling",
+  "validation_nll_before": 0.018060727044939995,
+  "validation_nll_after": 0.017712755128741264,
+  "validation_ece_before": 0.004601531228842811,
+  "validation_ece_after": 0.0042108394004203185,
+  "validation_brier_before": 0.009457512758672237,
+  "validation_brier_after": 0.009293674491345882,
+  "git_commit": "3b58719c4405ba069cdd497897b73bdfc5d93c19",
+  "generated_timestamp_utc": "2026-08-15T19:52:49.883356+00:00",
+  "architecture": "densenet121",
+  "default_probability_mode": "calibrated",
+  "default_probability_rationale": "Calibrated probabilities were kept as default because validation ECE, NLL, and Brier score all improved or stayed equal."
+}

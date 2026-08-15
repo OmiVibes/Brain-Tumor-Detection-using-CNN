@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 from datetime import UTC, datetime
 from pathlib import Path
 import csv
@@ -16,6 +17,7 @@ if str(SRC_PATH) not in sys.path:
 import matplotlib.pyplot as plt
 import torch
 
+from brainscan.core import load_best_validation_reference
 from brainscan.core.config import load_train_config, make_project_relative_path, resolve_project_path
 from brainscan.data import BrainMRIDataset, CANONICAL_CLASS_NAMES
 from brainscan.data.preprocessing import build_eval_transform
@@ -29,7 +31,6 @@ from brainscan.models import build_classifier
 from brainscan.training import load_checkpoint, load_dataset_fingerprint, resolve_device
 from brainscan.training.train_classifier import get_git_commit
 from brainscan.uncertainty import (
-    TemperatureScaler,
     assign_uncertainty_levels,
     build_temperature_artifact_payload,
     collect_logits_from_dataloader,
@@ -43,18 +44,24 @@ from brainscan.uncertainty import (
 )
 
 
-CHECKPOINT_PATH = Path("artifacts/models/resnet18_baseline_best.pt")
-TRAINING_HISTORY_PATH = Path("artifacts/training/resnet18_baseline_history.json")
-PHASE1E_ERRORS_CSV_PATH = Path("artifacts/evaluation/resnet18_baseline/errors.csv")
-OUTPUT_DIR = Path("artifacts/calibration/resnet18_baseline")
-TEMPERATURE_ARTIFACT_PATH = OUTPUT_DIR / "temperature.json"
-SUMMARY_ARTIFACT_PATH = OUTPUT_DIR / "metrics.json"
-RELIABILITY_BEFORE_JSON_PATH = OUTPUT_DIR / "reliability_before.json"
-RELIABILITY_AFTER_JSON_PATH = OUTPUT_DIR / "reliability_after.json"
-RELIABILITY_BEFORE_CSV_PATH = OUTPUT_DIR / "reliability_before.csv"
-RELIABILITY_AFTER_CSV_PATH = OUTPUT_DIR / "reliability_after.csv"
-RELIABILITY_BEFORE_PNG_PATH = OUTPUT_DIR / "reliability_before.png"
-RELIABILITY_AFTER_PNG_PATH = OUTPUT_DIR / "reliability_after.png"
+DEFAULT_CONFIG_PATH = Path("configs/train.yaml")
+DEFAULT_CHECKPOINT_PATH = Path("artifacts/models/resnet18_baseline_best.pt")
+DEFAULT_REFERENCE_METRICS_PATH = Path("artifacts/training/resnet18_baseline_history.json")
+DEFAULT_OUTPUT_DIR = Path("artifacts/calibration/resnet18_baseline")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run BrainScanAI calibration and uncertainty analysis.")
+    parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Training-style config path.")
+    parser.add_argument("--checkpoint-path", default=str(DEFAULT_CHECKPOINT_PATH), help="Frozen checkpoint path.")
+    parser.add_argument(
+        "--reference-metrics-path",
+        default=str(DEFAULT_REFERENCE_METRICS_PATH),
+        help="History JSON or summary JSON used to verify best epoch and validation macro F1.",
+    )
+    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory for calibration artifacts.")
+    parser.add_argument("--prefer-cuda", action="store_true", help="Prefer CUDA when available.")
+    return parser.parse_args()
 
 
 def _save_json(payload: object, path: Path) -> Path:
@@ -124,12 +131,7 @@ def _build_split_loader(config: dict[str, object], split_name: str) -> torch.uti
     )
 
 
-def _build_metrics_summary(
-    logits: torch.Tensor,
-    labels: torch.Tensor,
-    *,
-    n_bins: int = 15,
-) -> dict[str, object]:
+def _build_metrics_summary(logits: torch.Tensor, labels: torch.Tensor, *, n_bins: int = 15) -> dict[str, object]:
     summary = compute_probability_metrics(logits, labels, n_bins=n_bins)
     classification_bundle = compute_classification_metrics_bundle(
         true_ids=labels.cpu().tolist(),
@@ -146,14 +148,13 @@ def _extract_confidence_rows(
     labels: torch.Tensor,
     relative_paths: list[str],
 ) -> list[dict[str, object]]:
-    prediction_rows = build_predictions_rows(
+    return build_predictions_rows(
         relative_paths=relative_paths,
         true_ids=labels.cpu().tolist(),
         predicted_ids=probabilities.argmax(dim=1).cpu().tolist(),
         probabilities=probabilities.cpu().tolist(),
         class_names=CANONICAL_CLASS_NAMES,
     )
-    return prediction_rows
 
 
 def _revisit_high_confidence_errors(
@@ -215,29 +216,62 @@ def _revisit_high_confidence_errors(
     }
 
 
+def _choose_default_probability_mode(
+    raw_val_summary: dict[str, object],
+    calibrated_val_summary: dict[str, object],
+) -> tuple[str, str]:
+    calibrated_better_or_equal = (
+        float(calibrated_val_summary["ece"]) <= float(raw_val_summary["ece"])
+        and float(calibrated_val_summary["nll"]) <= float(raw_val_summary["nll"])
+        and float(calibrated_val_summary["brier_score"]) <= float(raw_val_summary["brier_score"])
+    )
+    if calibrated_better_or_equal:
+        return (
+            "calibrated",
+            "Calibrated probabilities were kept as default because validation ECE, NLL, and Brier score all improved or stayed equal.",
+        )
+    return (
+        "raw",
+        "Raw probabilities remain the default because validation calibration quality did not improve consistently after temperature scaling.",
+    )
+
+
 def main() -> None:
-    config = load_train_config("configs/train.yaml")
-    history = json.loads(resolve_project_path(TRAINING_HISTORY_PATH).read_text(encoding="utf-8"))
-    best_history_entry = next(entry for entry in history if int(entry["epoch"]) == 9)
+    args = parse_args()
+    config = load_train_config(args.config)
+    reference_metrics = load_best_validation_reference(args.reference_metrics_path)
 
     model = build_classifier(
         architecture=str(config["model"]["architecture"]),
         num_classes=int(config["model"]["num_classes"]),
         pretrained=False,
     )
-    checkpoint = load_checkpoint(CHECKPOINT_PATH, model, map_location="cpu")
+    checkpoint = load_checkpoint(args.checkpoint_path, model, map_location="cpu")
     dataset_fingerprint = load_dataset_fingerprint()["dataset_fingerprint"]
     checkpoint_metadata = verify_checkpoint_metadata(
         checkpoint,
         expected_dataset_fingerprint=dataset_fingerprint,
-        expected_validation_score=float(best_history_entry["val_macro_f1"]),
+        expected_architecture=str(config["model"]["architecture"]),
+        expected_epoch=int(reference_metrics["best_epoch"]),
+        expected_validation_score=float(reference_metrics["best_validation_macro_f1"]),
     )
     checkpoint_metadata = {**checkpoint_metadata, "epoch": int(checkpoint["epoch"])}
 
-    device, device_info = resolve_device(prefer_cuda=True)
+    output_dir = Path(args.output_dir)
+    temperature_artifact_path = output_dir / "temperature.json"
+    summary_artifact_path = output_dir / "metrics.json"
+    reliability_before_json_path = output_dir / "reliability_before.json"
+    reliability_after_json_path = output_dir / "reliability_after.json"
+    reliability_before_csv_path = output_dir / "reliability_before.csv"
+    reliability_after_csv_path = output_dir / "reliability_after.csv"
+    reliability_before_png_path = output_dir / "reliability_before.png"
+    reliability_after_png_path = output_dir / "reliability_after.png"
+
+    device, device_info = resolve_device(prefer_cuda=bool(args.prefer_cuda))
     model.to(device)
     model.eval()
 
+    architecture = str(checkpoint_metadata["architecture"])
     val_loader = _build_split_loader(config, "val")
     test_loader = _build_split_loader(config, "test")
 
@@ -266,19 +300,23 @@ def main() -> None:
     if not torch.equal(raw_test_predicted, calibrated_test_predicted):
         raise ValueError("Scalar temperature scaling changed test-set predicted class IDs materially.")
 
+    default_probability_mode, default_probability_rationale = _choose_default_probability_mode(
+        raw_val_summary,
+        calibrated_val_summary,
+    )
+    selected_val_summary = calibrated_val_summary if default_probability_mode == "calibrated" else raw_val_summary
+    selected_test_summary = calibrated_test_summary if default_probability_mode == "calibrated" else raw_test_summary
+
     thresholds = derive_uncertainty_thresholds(
-        raw_values := calibrated_val_summary["normalized_entropy"].cpu().tolist(),  # type: ignore[union-attr]
-        margin_values := calibrated_val_summary["top1_top2_margin"].cpu().tolist(),  # type: ignore[union-attr]
+        selected_val_summary["normalized_entropy"].cpu().tolist(),  # type: ignore[union-attr]
+        selected_val_summary["top1_top2_margin"].cpu().tolist(),  # type: ignore[union-attr]
     )
     uncertainty_levels = assign_uncertainty_levels(
-        calibrated_test_summary["normalized_entropy"].cpu().tolist(),  # type: ignore[union-attr]
-        calibrated_test_summary["top1_top2_margin"].cpu().tolist(),  # type: ignore[union-attr]
+        selected_test_summary["normalized_entropy"].cpu().tolist(),  # type: ignore[union-attr]
+        selected_test_summary["top1_top2_margin"].cpu().tolist(),  # type: ignore[union-attr]
         thresholds,
     )
-    level_counts = {
-        level: uncertainty_levels.count(level)
-        for level in ("LOW", "MEDIUM", "HIGH")
-    }
+    level_counts = {level: uncertainty_levels.count(level) for level in ("LOW", "MEDIUM", "HIGH")}
 
     raw_test_probabilities = softmax_probabilities_from_logits(test_logits)
     calibrated_test_probabilities = softmax_probabilities_from_logits(calibrated_test_logits)
@@ -287,17 +325,18 @@ def main() -> None:
 
     before_rows = raw_val_summary["calibration_bins"]  # type: ignore[assignment]
     after_rows = calibrated_val_summary["calibration_bins"]  # type: ignore[assignment]
-    _save_json(before_rows, RELIABILITY_BEFORE_JSON_PATH)
-    _save_json(after_rows, RELIABILITY_AFTER_JSON_PATH)
-    _save_reliability_csv(before_rows, RELIABILITY_BEFORE_CSV_PATH)
-    _save_reliability_csv(after_rows, RELIABILITY_AFTER_CSV_PATH)
-    _plot_reliability_diagram(before_rows, RELIABILITY_BEFORE_PNG_PATH, "ResNet18 Reliability Before Calibration")
-    _plot_reliability_diagram(after_rows, RELIABILITY_AFTER_PNG_PATH, "ResNet18 Reliability After Calibration")
+    _save_json(before_rows, reliability_before_json_path)
+    _save_json(after_rows, reliability_after_json_path)
+    _save_reliability_csv(before_rows, reliability_before_csv_path)
+    _save_reliability_csv(after_rows, reliability_after_csv_path)
+    title_prefix = architecture.replace("_", " ").title()
+    _plot_reliability_diagram(before_rows, reliability_before_png_path, f"{title_prefix} Reliability Before Calibration")
+    _plot_reliability_diagram(after_rows, reliability_after_png_path, f"{title_prefix} Reliability After Calibration")
 
     timestamp = datetime.now(UTC).isoformat()
     artifact_payload = build_temperature_artifact_payload(
         temperature=float(scaler.temperature.item()),
-        checkpoint_path=CHECKPOINT_PATH,
+        checkpoint_path=args.checkpoint_path,
         checkpoint_epoch=int(checkpoint["epoch"]),
         dataset_fingerprint=dataset_fingerprint,
         validation_metrics_before=raw_val_summary,
@@ -305,12 +344,15 @@ def main() -> None:
         git_commit=get_git_commit(),
         generated_timestamp_utc=timestamp,
     )
-    save_temperature_artifact(artifact_payload, TEMPERATURE_ARTIFACT_PATH)
+    artifact_payload["architecture"] = architecture
+    artifact_payload["default_probability_mode"] = default_probability_mode
+    artifact_payload["default_probability_rationale"] = default_probability_rationale
+    save_temperature_artifact(artifact_payload, temperature_artifact_path)
 
     summary_payload = {
-        "checkpoint": make_project_relative_path(CHECKPOINT_PATH),
+        "checkpoint": make_project_relative_path(args.checkpoint_path),
         "checkpoint_epoch": int(checkpoint["epoch"]),
-        "architecture": checkpoint_metadata["architecture"],
+        "architecture": architecture,
         "dataset_fingerprint": dataset_fingerprint,
         "device_info": device_info,
         "calibration_method": "temperature_scaling",
@@ -351,6 +393,9 @@ def main() -> None:
             "brier_score": calibrated_test_summary["brier_score"],
         },
         "argmax_preserved": True,
+        "default_probability_mode": default_probability_mode,
+        "default_probability_rationale": default_probability_rationale,
+        "uncertainty_threshold_source": f"{default_probability_mode} validation probabilities only",
         "uncertainty_thresholds": thresholds,
         "test_uncertainty_level_counts": level_counts,
         "uncertainty_by_correctness_raw": summarize_uncertainty_by_correctness(raw_test_probabilities, test_labels),
@@ -359,38 +404,62 @@ def main() -> None:
             test_labels,
         ),
         "error_detection_auroc": {
-            "entropy": error_detection_auroc(calibrated_test_probabilities, test_labels, score_kind="entropy"),
-            "one_minus_calibrated_confidence": error_detection_auroc(
+            "raw_entropy": error_detection_auroc(raw_test_probabilities, test_labels, score_kind="entropy"),
+            "raw_one_minus_confidence": error_detection_auroc(
+                raw_test_probabilities,
+                test_labels,
+                score_kind="one_minus_confidence",
+            ),
+            "calibrated_entropy": error_detection_auroc(
                 calibrated_test_probabilities,
+                test_labels,
+                score_kind="entropy",
+            ),
+            "calibrated_one_minus_confidence": error_detection_auroc(
+                calibrated_test_probabilities,
+                test_labels,
+                score_kind="one_minus_confidence",
+            ),
+        },
+        "selected_error_detection_auroc": {
+            "entropy": error_detection_auroc(
+                calibrated_test_probabilities if default_probability_mode == "calibrated" else raw_test_probabilities,
+                test_labels,
+                score_kind="entropy",
+            ),
+            "one_minus_confidence": error_detection_auroc(
+                calibrated_test_probabilities if default_probability_mode == "calibrated" else raw_test_probabilities,
                 test_labels,
                 score_kind="one_minus_confidence",
             ),
         },
         "high_confidence_error_changes": high_confidence_error_changes,
         "reliability_artifacts": {
-            "before_json": make_project_relative_path(RELIABILITY_BEFORE_JSON_PATH),
-            "after_json": make_project_relative_path(RELIABILITY_AFTER_JSON_PATH),
-            "before_csv": make_project_relative_path(RELIABILITY_BEFORE_CSV_PATH),
-            "after_csv": make_project_relative_path(RELIABILITY_AFTER_CSV_PATH),
-            "before_png": make_project_relative_path(RELIABILITY_BEFORE_PNG_PATH),
-            "after_png": make_project_relative_path(RELIABILITY_AFTER_PNG_PATH),
+            "before_json": make_project_relative_path(reliability_before_json_path),
+            "after_json": make_project_relative_path(reliability_after_json_path),
+            "before_csv": make_project_relative_path(reliability_before_csv_path),
+            "after_csv": make_project_relative_path(reliability_after_csv_path),
+            "before_png": make_project_relative_path(reliability_before_png_path),
+            "after_png": make_project_relative_path(reliability_after_png_path),
         },
-        "temperature_artifact": make_project_relative_path(TEMPERATURE_ARTIFACT_PATH),
+        "temperature_artifact": make_project_relative_path(temperature_artifact_path),
         "generated_timestamp_utc": timestamp,
     }
-    _save_json(summary_payload, SUMMARY_ARTIFACT_PATH)
+    _save_json(summary_payload, summary_artifact_path)
 
     print("calibration_summary=")
-    print(f"  checkpoint={resolve_project_path(CHECKPOINT_PATH)}")
+    print(f"  checkpoint={resolve_project_path(args.checkpoint_path)}")
     print(f"  checkpoint_epoch={checkpoint['epoch']}")
+    print(f"  architecture={architecture}")
     print(f"  validation_sample_count={len(val_logits_bundle['relative_paths'])}")
     print(f"  learned_temperature={float(scaler.temperature.item()):.6f}")
+    print(f"  default_probability_mode={default_probability_mode}")
     print(f"  val_ece_before={raw_val_summary['ece']:.6f}")
     print(f"  val_ece_after={calibrated_val_summary['ece']:.6f}")
     print(f"  test_ece_before={raw_test_summary['ece']:.6f}")
     print(f"  test_ece_after={calibrated_test_summary['ece']:.6f}")
-    print(f"  temperature_json={resolve_project_path(TEMPERATURE_ARTIFACT_PATH)}")
-    print(f"  summary_json={resolve_project_path(SUMMARY_ARTIFACT_PATH)}")
+    print(f"  temperature_json={resolve_project_path(temperature_artifact_path)}")
+    print(f"  summary_json={resolve_project_path(summary_artifact_path)}")
 
 
 if __name__ == "__main__":

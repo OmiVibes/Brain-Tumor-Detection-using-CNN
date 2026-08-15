@@ -55,6 +55,9 @@ def build_abstention_policy_artifact(
         "checkpoint": make_project_relative_path(checkpoint_path),
         "checkpoint_epoch": checkpoint_epoch,
         "dataset_fingerprint": dataset_fingerprint,
+        "architecture": ood_metadata["architecture"],
+        "feature_layer": ood_metadata["feature_layer"],
+        "feature_dimension": ood_metadata["feature_dimension"],
         "ood_method": ood_metadata["ood_method"],
         "ood_thresholds": {
             "warning_threshold": ood_metadata["warning_threshold"],
@@ -65,7 +68,13 @@ def build_abstention_policy_artifact(
             "fail_threshold_derivation": ood_metadata["threshold_derivation"],
         },
         "quality_thresholds": quality_payload["thresholds"],
+        "quality_thresholds_source": {
+            "derivation": quality_payload.get("derivation", quality_payload["thresholds"].get("derivation")),
+            "reuse_note": quality_payload.get("reuse_note"),
+            "source_artifact": quality_payload.get("source_artifact"),
+        },
         "uncertainty_thresholds": uncertainty_metrics["uncertainty_thresholds"],
+        "probability_mode": uncertainty_metrics.get("default_probability_mode", "raw"),
         "decision_rules": {
             "abstain": [
                 "invalid_or_corrupt_input",

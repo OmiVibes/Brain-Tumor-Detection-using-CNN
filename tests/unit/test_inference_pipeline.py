@@ -14,11 +14,30 @@ from brainscan.robustness.ood import ResNet18FeatureExtractor
 
 
 VALID_MRI_PATH = Path("dataset/test/glioma/Te-glTr_0001.jpg")
+DENSENET_CONFIG_PATH = Path("configs/densenet121_final.yaml")
+DENSENET_CHECKPOINT_PATH = Path("artifacts/models/comparison/densenet121_seed42/best.pt")
+DENSENET_OOD_REFERENCE_NPZ_PATH = Path("artifacts/robustness/densenet121_final/ood_reference.npz")
+DENSENET_OOD_REFERENCE_JSON_PATH = Path("artifacts/robustness/densenet121_final/ood_reference.json")
+DENSENET_QUALITY_THRESHOLDS_PATH = Path("artifacts/robustness/densenet121_final/quality_thresholds.json")
+DENSENET_UNCERTAINTY_METRICS_PATH = Path("artifacts/calibration/densenet121_final/metrics.json")
 
 
 @pytest.fixture(scope="module")
 def pipeline() -> BrainScanInferencePipeline:
     return BrainScanInferencePipeline(prefer_cuda=False)
+
+
+@pytest.fixture(scope="module")
+def densenet_pipeline() -> BrainScanInferencePipeline:
+    return BrainScanInferencePipeline(
+        config_path=DENSENET_CONFIG_PATH,
+        checkpoint_path=DENSENET_CHECKPOINT_PATH,
+        ood_reference_npz_path=DENSENET_OOD_REFERENCE_NPZ_PATH,
+        ood_reference_json_path=DENSENET_OOD_REFERENCE_JSON_PATH,
+        quality_thresholds_path=DENSENET_QUALITY_THRESHOLDS_PATH,
+        uncertainty_metrics_path=DENSENET_UNCERTAINTY_METRICS_PATH,
+        prefer_cuda=False,
+    )
 
 
 def _write_constant_image(path: Path, value: int) -> Path:
@@ -203,3 +222,49 @@ def test_blurred_mri_returns_review_or_abstain(tmp_path: Path, pipeline: BrainSc
         image.convert("RGB").filter(ImageFilter.GaussianBlur(radius=6)).save(blurred_path)
     result = pipeline.predict(blurred_path)
     assert result.status in {"REVIEW", "ABSTAIN", "ACCEPT"}
+
+
+def test_densenet_pipeline_loads_architecture_specific_artifacts(
+    densenet_pipeline: BrainScanInferencePipeline,
+) -> None:
+    assert densenet_pipeline.active_architecture == "densenet121"
+    assert densenet_pipeline.default_probability_mode == "calibrated"
+    assert densenet_pipeline.temperature_artifact is not None
+    assert densenet_pipeline.temperature is not None
+    assert densenet_pipeline.temperature_artifact_path == DENSENET_UNCERTAINTY_METRICS_PATH.with_name(
+        "temperature.json"
+    )
+    assert densenet_pipeline.feature_extractor.feature_layer_name == "features.norm5 -> relu -> adaptive_avg_pool2d"
+    assert densenet_pipeline.feature_extractor.feature_dimension == 1024
+    assert densenet_pipeline.ood_metadata["architecture"] == "densenet121"
+    assert densenet_pipeline.ood_metadata["checkpoint"] == str(DENSENET_CHECKPOINT_PATH).replace("\\", "/")
+
+
+def test_densenet_pipeline_uses_validation_only_threshold_metadata(
+    densenet_pipeline: BrainScanInferencePipeline,
+) -> None:
+    assert densenet_pipeline.uncertainty_metrics["validation_sample_count"] == 703
+    assert densenet_pipeline.uncertainty_metrics["uncertainty_threshold_source"] == (
+        "calibrated validation probabilities only"
+    )
+    assert densenet_pipeline.quality_payload["derivation_split_counts"]["validation"] == 703
+    assert densenet_pipeline.quality_payload["source_artifact"] == (
+        "artifacts/robustness/resnet18_baseline/quality_thresholds.json"
+    )
+    assert "validation" in str(densenet_pipeline.ood_metadata["threshold_derivation"]).lower()
+    assert "test" not in str(densenet_pipeline.ood_metadata["threshold_derivation"]).lower()
+
+
+def test_densenet_prediction_preserves_raw_confidence_output(
+    densenet_pipeline: BrainScanInferencePipeline,
+) -> None:
+    result = densenet_pipeline.predict(VALID_MRI_PATH)
+    assert result.status in {"ACCEPT", "REVIEW"}
+    assert result.prediction is not None
+    assert result.analysis_prediction is not None
+    assert result.prediction.raw_confidence == result.analysis_prediction.raw_confidence
+    assert 0.0 <= result.prediction.raw_confidence <= 1.0
+    assert result.uncertainty is not None
+    assert result.uncertainty.level in {"LOW", "MEDIUM", "HIGH"}
+    assert result.ood is not None
+    assert result.ood.status in {"PASS", "BORDERLINE", "FAIL"}

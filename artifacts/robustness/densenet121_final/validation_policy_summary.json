@@ -1,0 +1,16 @@
+{
+  "total": 703,
+  "counts": {
+    "ACCEPT": 148,
+    "REVIEW": 519,
+    "ABSTAIN": 36
+  },
+  "rates": {
+    "ACCEPT": 0.21052631578947367,
+    "REVIEW": 0.7382645803698435,
+    "ABSTAIN": 0.051209103840682786
+  },
+  "architecture": "densenet121",
+  "checkpoint": "artifacts/models/comparison/densenet121_seed42/best.pt",
+  "policy_artifact": "artifacts/robustness/densenet121_final/abstention_policy.json"
+}
