@@ -5,6 +5,7 @@ PROJECT_CONTEXT.txt
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tmp/
 
 .venv/
 venv/

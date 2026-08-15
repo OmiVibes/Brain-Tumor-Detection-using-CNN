@@ -39,6 +39,7 @@ from brainscan.training import (
     build_optimizer,
     build_scheduler,
     fit_classifier,
+    load_checkpoint,
     load_dataset_fingerprint,
     reload_and_validate_checkpoint,
     resolve_device,
@@ -53,6 +54,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--experiment-name", default=None, help="Optional explicit experiment name.")
     parser.add_argument("--batch-size", type=int, required=True, help="Batch size for this run.")
     parser.add_argument("--learning-rate", type=float, default=None, help="Optional minor LR override.")
+    parser.add_argument(
+        "--disable-amp",
+        action="store_true",
+        help="Disable mixed precision for numerically unstable architectures.",
+    )
     parser.add_argument("--smoke-test", action="store_true", help="Run a short smoke test only.")
     parser.add_argument("--max-train-batches", type=int, default=None, help="Optional train batch cap.")
     parser.add_argument("--max-val-batches", type=int, default=None, help="Optional val batch cap.")
@@ -62,6 +68,10 @@ def parse_args() -> argparse.Namespace:
 def _estimate_checkpoint_size_mb(checkpoint_path: Path) -> float:
     resolved = resolve_project_path(checkpoint_path)
     return round(resolved.stat().st_size / (1024**2), 2)
+
+
+def _memory_mb_from_bytes(total_bytes: int) -> float:
+    return round(total_bytes / (1024**2), 2)
 
 
 def main() -> None:
@@ -81,6 +91,8 @@ def main() -> None:
         learning_rate=args.learning_rate,
     )
     paths = build_comparison_paths(experiment_name)
+    if args.disable_amp:
+        config["training"]["mixed_precision"] = False
 
     set_global_seed(int(config["training"]["seed"]))
     device, device_info = resolve_device(prefer_cuda=True)
@@ -140,8 +152,12 @@ def main() -> None:
         f"trainable_parameters={count_trainable_parameters(model)} "
         f"image_size={config['training']['image_size']} "
         f"batch_size={config['training']['batch_size']} "
+        f"mixed_precision={config['training']['mixed_precision']} "
         f"classes={list(CANONICAL_CLASS_TO_ID.keys())}"
     )
+
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
 
     train_start = time.perf_counter()
     results = fit_classifier(
@@ -163,8 +179,20 @@ def main() -> None:
         max_val_batches=max_val_batches,
     )
     train_seconds = time.perf_counter() - train_start
+    peak_vram_mb = (
+        _memory_mb_from_bytes(torch.cuda.max_memory_allocated(device)) if device.type == "cuda" else None
+    )
 
     sample_batch = next(iter(val_loader))
+    checkpoint_load_start = time.perf_counter()
+    reloaded_model = build_classifier(
+        architecture=str(config["model"]["architecture"]),
+        num_classes=int(config["model"]["num_classes"]),
+        pretrained=False,
+    )
+    _ = load_checkpoint(paths["best_checkpoint"], reloaded_model, map_location=device)
+    checkpoint_load_time_ms = (time.perf_counter() - checkpoint_load_start) * 1000.0
+
     validation_result = reload_and_validate_checkpoint(
         results["best_checkpoint_path"],
         model=build_classifier(
@@ -175,7 +203,13 @@ def main() -> None:
         device=device,
         sample_batch=sample_batch,
     )
-    benchmark = benchmark_model_inference(model, sample_batch[0], device)
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
+    benchmark = benchmark_model_inference(reloaded_model.to(device), sample_batch[0], device)
+    peak_benchmark_vram_mb = (
+        _memory_mb_from_bytes(torch.cuda.max_memory_allocated(device)) if device.type == "cuda" else None
+    )
+    benchmark["checkpoint_load_time_ms"] = checkpoint_load_time_ms
 
     best_checkpoint_mb = _estimate_checkpoint_size_mb(paths["best_checkpoint"])
     summary_payload = {
@@ -184,12 +218,14 @@ def main() -> None:
         "seed": int(config["training"]["seed"]),
         "batch_size": int(config["training"]["batch_size"]),
         "learning_rate": float(config["training"]["learning_rate"]),
+        "mixed_precision": bool(config["training"]["mixed_precision"]),
         "dataset_fingerprint": dataset_fingerprint["dataset_fingerprint"],
         "model_metadata": model_metadata,
         "device_info": device_info,
         "best_epoch": results["best_epoch"],
         "best_validation_macro_f1": results["best_score"],
         "epochs_completed": results["epochs_completed"],
+        "resumed_from_epoch": results.get("resumed_from_epoch"),
         "training_duration_seconds": train_seconds,
         "best_checkpoint_path": paths["best_checkpoint"].as_posix(),
         "last_checkpoint_path": paths["last_checkpoint"].as_posix(),
@@ -199,6 +235,8 @@ def main() -> None:
         "final_history": results["history"][-1],
         "history": results["history"],
         "benchmark": benchmark,
+        "peak_vram_mb": peak_vram_mb,
+        "peak_benchmark_vram_mb": peak_benchmark_vram_mb,
         "reload_validation": validation_result,
         "generated_timestamp_utc": datetime.now(UTC).isoformat(),
         "smoke_test": bool(args.smoke_test),
@@ -210,10 +248,13 @@ def main() -> None:
         "architecture": str(config["model"]["architecture"]),
         "seed": int(config["training"]["seed"]),
         "batch_size": int(config["training"]["batch_size"]),
+        "mixed_precision": bool(config["training"]["mixed_precision"]),
         "device_info": device_info,
         "benchmark": benchmark,
         "best_checkpoint_size_mb": best_checkpoint_mb,
         "training_duration_seconds": train_seconds,
+        "peak_vram_mb": peak_vram_mb,
+        "peak_benchmark_vram_mb": peak_benchmark_vram_mb,
         "generated_timestamp_utc": datetime.now(UTC).isoformat(),
     }
     if args.smoke_test:
@@ -225,9 +266,12 @@ def main() -> None:
     print(f"  best_epoch={results['best_epoch']}")
     print(f"  best_val_macro_f1={results['best_score']}")
     print(f"  epochs_completed={results['epochs_completed']}")
+    print(f"  resumed_from_epoch={results.get('resumed_from_epoch')}")
     print(f"  training_duration_seconds={train_seconds:.2f}")
     print(f"  best_checkpoint={resolve_project_path(paths['best_checkpoint'])}")
     print(f"  best_checkpoint_size_mb={best_checkpoint_mb}")
+    print(f"  peak_vram_mb={peak_vram_mb}")
+    print(f"  peak_benchmark_vram_mb={peak_benchmark_vram_mb}")
     print(f"  summary_json={resolve_project_path(summary_path)}")
     print(f"  benchmark={benchmark}")
 

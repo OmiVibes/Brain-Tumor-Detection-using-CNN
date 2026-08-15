@@ -1,0 +1,268 @@
+{
+  "selected_architecture": "densenet121",
+  "selected_experiment_names": [
+    "densenet121_seed42",
+    "densenet121_seed1337"
+  ],
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "validation_basis": {
+    "ranking_split": "validation",
+    "aggregated_rows_path": "artifacts/model_comparison/model_comparison.json",
+    "selected_best_validation_macro_f1": 0.9944200759418182,
+    "selected_mean_validation_macro_f1": 0.9930403736576712,
+    "selected_mean_validation_accuracy": 0.9928876244665719,
+    "selected_run_count": 2,
+    "selected_seeds": [
+      42,
+      1337
+    ]
+  },
+  "engineering_tradeoffs": {
+    "rationale": "Selected the fastest and smallest architecture among candidates that remained within 0.002 macro-F1 of the best mean validation score.",
+    "mean_per_image_latency_ms": 7.145314875003805,
+    "throughput_images_per_second": 139.95184831269938,
+    "parameter_count": 6957956,
+    "checkpoint_size_mb_mean": 80.42,
+    "peak_vram_mb_max": 1115.13
+  },
+  "decision_timestamp_utc": "2026-08-15T19:09:04.891139+00:00",
+  "git_commit": "77ff4c9e54545444cf2d27c83d90270d81f3078e",
+  "selection_rule": "validation-only architecture ranking using predictive performance plus latency, parameter count, checkpoint size, VRAM fit, and training stability",
+  "test_evaluated_before_freeze": false,
+  "candidate_rank_order": [
+    "densenet121",
+    "convnext_tiny",
+    "resnet18",
+    "efficientnet_v2_s"
+  ],
+  "ranked_architectures": [
+    {
+      "architecture": "densenet121",
+      "run_count": 2,
+      "experiment_names": [
+        "densenet121_seed42",
+        "densenet121_seed1337"
+      ],
+      "seeds": [
+        42,
+        1337
+      ],
+      "batch_sizes": [
+        8,
+        8
+      ],
+      "learning_rates": [
+        0.0001,
+        0.0001
+      ],
+      "mixed_precision_modes": [
+        false
+      ],
+      "weights_name": "DenseNet121_Weights.IMAGENET1K_V1",
+      "parameter_count": 6957956,
+      "trainable_parameter_count": 6957956,
+      "estimated_model_size_mb": 26.54,
+      "checkpoint_size_mb_mean": 80.42,
+      "checkpoint_size_mb_max": 80.42,
+      "input_size": [
+        224,
+        224
+      ],
+      "class_mapping": {
+        "glioma": 0,
+        "meningioma": 1,
+        "pituitary": 2,
+        "no_tumor": 3
+      },
+      "best_validation_accuracy": 0.9943100995732574,
+      "mean_validation_accuracy": 0.9928876244665719,
+      "std_validation_accuracy": 0.002011683588012946,
+      "best_validation_macro_f1": 0.9944200759418182,
+      "mean_validation_macro_f1": 0.9930403736576712,
+      "std_validation_macro_f1": 0.0019511936822778561,
+      "worst_validation_macro_f1": 0.9916606713735242,
+      "best_validation_loss": 0.018060726114494573,
+      "best_epoch": 13,
+      "training_duration_seconds_mean": 3420.15696905,
+      "training_duration_seconds_max": 4504.287591,
+      "mean_per_image_latency_ms": 7.145314875003805,
+      "throughput_images_per_second": 139.95184831269938,
+      "checkpoint_load_time_ms_mean": 1123.9698999997927,
+      "peak_vram_mb_max": 1115.13,
+      "peak_benchmark_vram_mb_max": 313.37,
+      "best_run_experiment_name": "densenet121_seed42",
+      "best_run_seed": 42,
+      "worst_run_experiment_name": "densenet121_seed1337",
+      "worst_run_seed": 1337,
+      "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1"
+    },
+    {
+      "architecture": "convnext_tiny",
+      "run_count": 1,
+      "experiment_names": [
+        "convnext_tiny_seed42"
+      ],
+      "seeds": [
+        42
+      ],
+      "batch_sizes": [
+        4
+      ],
+      "learning_rates": [
+        0.0001
+      ],
+      "mixed_precision_modes": [
+        true
+      ],
+      "weights_name": "ConvNeXt_Tiny_Weights.IMAGENET1K_V1",
+      "parameter_count": 27823204,
+      "trainable_parameter_count": 27823204,
+      "estimated_model_size_mb": 106.14,
+      "checkpoint_size_mb_mean": 318.59,
+      "checkpoint_size_mb_max": 318.59,
+      "input_size": [
+        224,
+        224
+      ],
+      "class_mapping": {
+        "glioma": 0,
+        "meningioma": 1,
+        "pituitary": 2,
+        "no_tumor": 3
+      },
+      "best_validation_accuracy": 0.9928876244665719,
+      "mean_validation_accuracy": 0.9928876244665719,
+      "std_validation_accuracy": null,
+      "best_validation_macro_f1": 0.9926939550063636,
+      "mean_validation_macro_f1": 0.9926939550063636,
+      "std_validation_macro_f1": null,
+      "worst_validation_macro_f1": 0.9926939550063636,
+      "best_validation_loss": 0.031830216878508434,
+      "best_epoch": 17,
+      "training_duration_seconds_mean": 1.8184558000011748,
+      "training_duration_seconds_max": 1.8184558000011748,
+      "mean_per_image_latency_ms": 9.24489200006974,
+      "throughput_images_per_second": 108.16784014269246,
+      "checkpoint_load_time_ms_mean": 3414.5840000001044,
+      "peak_vram_mb_max": 428.17,
+      "peak_benchmark_vram_mb_max": 806.31,
+      "best_run_experiment_name": "convnext_tiny_seed42",
+      "best_run_seed": 42,
+      "worst_run_experiment_name": "convnext_tiny_seed42",
+      "worst_run_seed": 42,
+      "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1"
+    },
+    {
+      "architecture": "resnet18",
+      "run_count": 1,
+      "experiment_names": [
+        "resnet18_seed42"
+      ],
+      "seeds": [
+        42
+      ],
+      "batch_sizes": [
+        16
+      ],
+      "learning_rates": [
+        0.0001
+      ],
+      "mixed_precision_modes": [
+        true
+      ],
+      "weights_name": "ResNet18_Weights.IMAGENET1K_V1",
+      "parameter_count": 11178564,
+      "trainable_parameter_count": 11178564,
+      "estimated_model_size_mb": 42.64,
+      "checkpoint_size_mb_mean": 128.04,
+      "checkpoint_size_mb_max": 128.04,
+      "input_size": [
+        224,
+        224
+      ],
+      "class_mapping": {
+        "glioma": 0,
+        "meningioma": 1,
+        "pituitary": 2,
+        "no_tumor": 3
+      },
+      "best_validation_accuracy": 0.9857752489331437,
+      "mean_validation_accuracy": 0.9857752489331437,
+      "std_validation_accuracy": null,
+      "best_validation_macro_f1": 0.985834622442677,
+      "mean_validation_macro_f1": 0.985834622442677,
+      "std_validation_macro_f1": null,
+      "worst_validation_macro_f1": 0.985834622442677,
+      "best_validation_loss": 0.03784097954339399,
+      "best_epoch": 9,
+      "training_duration_seconds_mean": 2494.587456200001,
+      "training_duration_seconds_max": 2494.587456200001,
+      "mean_per_image_latency_ms": 1.7990629999803787,
+      "throughput_images_per_second": 555.8449037142703,
+      "checkpoint_load_time_ms_mean": 538.596399997914,
+      "peak_vram_mb_max": 382.12,
+      "peak_benchmark_vram_mb_max": 481.78,
+      "best_run_experiment_name": "resnet18_seed42",
+      "best_run_seed": 42,
+      "worst_run_experiment_name": "resnet18_seed42",
+      "worst_run_seed": 42,
+      "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1"
+    },
+    {
+      "architecture": "efficientnet_v2_s",
+      "run_count": 1,
+      "experiment_names": [
+        "efficientnet_v2_s_seed42"
+      ],
+      "seeds": [
+        42
+      ],
+      "batch_sizes": [
+        8
+      ],
+      "learning_rates": [
+        0.0001
+      ],
+      "mixed_precision_modes": [
+        true
+      ],
+      "weights_name": "EfficientNet_V2_S_Weights.IMAGENET1K_V1",
+      "parameter_count": 20182612,
+      "trainable_parameter_count": 20182612,
+      "estimated_model_size_mb": 76.99,
+      "checkpoint_size_mb_mean": 232.1,
+      "checkpoint_size_mb_max": 232.1,
+      "input_size": [
+        224,
+        224
+      ],
+      "class_mapping": {
+        "glioma": 0,
+        "meningioma": 1,
+        "pituitary": 2,
+        "no_tumor": 3
+      },
+      "best_validation_accuracy": 0.9857752489331437,
+      "mean_validation_accuracy": 0.9857752489331437,
+      "std_validation_accuracy": null,
+      "best_validation_macro_f1": 0.9855959659003766,
+      "mean_validation_macro_f1": 0.9855959659003766,
+      "std_validation_macro_f1": null,
+      "worst_validation_macro_f1": 0.9855959659003766,
+      "best_validation_loss": 0.04542672244121008,
+      "best_epoch": 6,
+      "training_duration_seconds_mean": 8575.3759857,
+      "training_duration_seconds_max": 8575.3759857,
+      "mean_per_image_latency_ms": 9.970860499997798,
+      "throughput_images_per_second": 100.29224659197878,
+      "checkpoint_load_time_ms_mean": 3544.647700000496,
+      "peak_vram_mb_max": 894.08,
+      "peak_benchmark_vram_mb_max": 759.88,
+      "best_run_experiment_name": "efficientnet_v2_s_seed42",
+      "best_run_seed": 42,
+      "worst_run_experiment_name": "efficientnet_v2_s_seed42",
+      "worst_run_seed": 42,
+      "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1"
+    }
+  ]
+}

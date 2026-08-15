@@ -12,6 +12,8 @@ from brainscan.training.train_classifier import (
     build_optimizer,
     build_scheduler,
     compute_classification_metrics,
+    fit_classifier,
+    load_training_history,
     resolve_amp_enabled,
     train_one_epoch,
     validate_one_epoch,
@@ -128,3 +130,104 @@ def test_training_api_does_not_take_test_loader() -> None:
 
     signature = inspect.signature(train_one_epoch)
     assert "test_loader" not in signature.parameters
+
+
+def _make_fit_config(epochs: int) -> dict[str, object]:
+    return {
+        "optimizer": {"name": "adamw"},
+        "training": {
+            "learning_rate": 0.001,
+            "weight_decay": 0.0001,
+            "mixed_precision": False,
+            "epochs": epochs,
+            "early_stopping_patience": 10,
+        },
+        "model": {"num_classes": 4},
+        "checkpoint": {"monitor": "val_macro_f1", "mode": "max"},
+    }
+
+
+def test_fit_classifier_persists_epoch_history(tmp_path) -> None:
+    model = _make_model()
+    loader = _make_loader()
+    optimizer = build_optimizer(model, _make_config())
+    criterion = build_loss_function()
+
+    results = fit_classifier(
+        model=model,
+        train_loader=loader,
+        val_loader=loader,
+        criterion=criterion,
+        optimizer=optimizer,
+        scheduler=None,
+        device=torch.device("cpu"),
+        config=_make_fit_config(epochs=2),
+        checkpoint_metadata={"architecture": "toy"},
+        best_checkpoint_path=tmp_path / "best.pt",
+        last_checkpoint_path=tmp_path / "last.pt",
+        history_json_path=tmp_path / "history.json",
+        history_csv_path=tmp_path / "history.csv",
+        curve_output_dir=tmp_path,
+        max_train_batches=1,
+        max_val_batches=1,
+    )
+
+    persisted_history = load_training_history(tmp_path / "history.json")
+    assert len(persisted_history) == results["epochs_completed"] == 2
+    assert persisted_history[-1]["epoch"] == 2
+
+
+def test_fit_classifier_resumes_from_last_completed_epoch(tmp_path) -> None:
+    history_json = tmp_path / "history.json"
+    history_csv = tmp_path / "history.csv"
+    best_checkpoint = tmp_path / "best.pt"
+    last_checkpoint = tmp_path / "last.pt"
+
+    first_model = _make_model()
+    first_optimizer = build_optimizer(first_model, _make_config())
+    criterion = build_loss_function()
+    fit_classifier(
+        model=first_model,
+        train_loader=_make_loader(),
+        val_loader=_make_loader(),
+        criterion=criterion,
+        optimizer=first_optimizer,
+        scheduler=None,
+        device=torch.device("cpu"),
+        config=_make_fit_config(epochs=2),
+        checkpoint_metadata={"architecture": "toy"},
+        best_checkpoint_path=best_checkpoint,
+        last_checkpoint_path=last_checkpoint,
+        history_json_path=history_json,
+        history_csv_path=history_csv,
+        curve_output_dir=tmp_path,
+        max_train_batches=1,
+        max_val_batches=1,
+    )
+
+    resumed_model = _make_model()
+    resumed_optimizer = build_optimizer(resumed_model, _make_config())
+    resumed_results = fit_classifier(
+        model=resumed_model,
+        train_loader=_make_loader(),
+        val_loader=_make_loader(),
+        criterion=criterion,
+        optimizer=resumed_optimizer,
+        scheduler=None,
+        device=torch.device("cpu"),
+        config=_make_fit_config(epochs=4),
+        checkpoint_metadata={"architecture": "toy"},
+        best_checkpoint_path=best_checkpoint,
+        last_checkpoint_path=last_checkpoint,
+        history_json_path=history_json,
+        history_csv_path=history_csv,
+        curve_output_dir=tmp_path,
+        max_train_batches=1,
+        max_val_batches=1,
+    )
+
+    resumed_history = load_training_history(history_json)
+    assert resumed_results["resumed_from_epoch"] == 2
+    assert resumed_results["epochs_completed"] == 4
+    assert len(resumed_history) == 4
+    assert resumed_history[-1]["epoch"] == 4

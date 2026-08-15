@@ -9,6 +9,7 @@ import csv
 import json
 import subprocess
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -20,6 +21,9 @@ from torch.utils.data import DataLoader
 
 from brainscan.core.config import resolve_project_path
 from brainscan.data import CANONICAL_CLASS_TO_ID, IMAGENET_MEAN, IMAGENET_STD
+
+
+matplotlib.use("Agg")
 
 
 HistoryEntry = dict[str, float | int]
@@ -391,6 +395,18 @@ def save_training_history(
     return resolved_json, resolved_csv
 
 
+def load_training_history(history_json_path: str | Path) -> list[HistoryEntry]:
+    """Load persisted epoch history if it exists."""
+    resolved_json = resolve_project_path(history_json_path)
+    if not resolved_json.exists():
+        return []
+    with resolved_json.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if not isinstance(payload, list):
+        raise TypeError("Training history JSON must contain a list of epoch entries.")
+    return payload
+
+
 def plot_training_curves(history: list[HistoryEntry], output_dir: str | Path) -> list[Path]:
     """Plot loss, accuracy, and F1 curves from saved history."""
     if not history:
@@ -486,8 +502,64 @@ def fit_classifier(
     scaler = torch.amp.GradScaler(device="cuda", enabled=amp_enabled)
     early_stopping = EarlyStoppingMonitor(mode=monitor_mode, patience=patience)
     history: list[HistoryEntry] = []
+    resumed_from_epoch: int | None = None
+    best_checkpoint_resolved = resolve_project_path(best_checkpoint_path)
+    last_checkpoint_resolved = resolve_project_path(last_checkpoint_path)
+    history_json_resolved = resolve_project_path(history_json_path)
 
-    for epoch in range(1, max_epochs + 1):
+    if last_checkpoint_resolved.exists() and history_json_resolved.exists():
+        checkpoint = load_checkpoint(
+            last_checkpoint_resolved,
+            model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            map_location=device,
+        )
+        history = load_training_history(history_json_resolved)
+        if history and int(history[-1]["epoch"]) != int(checkpoint["epoch"]):
+            raise ValueError(
+                "Persisted history and last checkpoint are out of sync; refusing automatic resume."
+            )
+        if not best_checkpoint_resolved.exists():
+            raise FileNotFoundError(
+                f"Best checkpoint missing for resumable run: {best_checkpoint_resolved}"
+            )
+        for history_entry in history:
+            early_stopping.update(float(history_entry[monitor_name]), int(history_entry["epoch"]))
+        resumed_from_epoch = int(checkpoint["epoch"])
+        print(
+            f"Resuming training from epoch {resumed_from_epoch + 1} "
+            f"using {last_checkpoint_resolved}."
+        )
+    elif last_checkpoint_resolved.exists() or history_json_resolved.exists():
+        print(
+            "Detected incomplete resume artifacts without both last checkpoint and history; "
+            "starting this run from scratch and overwriting stale partial outputs."
+        )
+
+    start_epoch = resumed_from_epoch + 1 if resumed_from_epoch is not None else 1
+    if start_epoch > max_epochs or early_stopping.bad_epochs >= patience:
+        history_json, history_csv = save_training_history(
+            history,
+            json_path=history_json_path,
+            csv_path=history_csv_path,
+        )
+        curve_paths = plot_training_curves(history, curve_output_dir)
+        return {
+            "history": history,
+            "history_json_path": history_json,
+            "history_csv_path": history_csv,
+            "curve_paths": curve_paths,
+            "best_checkpoint_path": best_checkpoint_resolved,
+            "last_checkpoint_path": last_checkpoint_resolved,
+            "best_epoch": early_stopping.best_epoch,
+            "best_score": early_stopping.best_score,
+            "epochs_completed": len(history),
+            "amp_enabled": amp_enabled,
+            "resumed_from_epoch": resumed_from_epoch,
+        }
+
+    for epoch in range(start_epoch, max_epochs + 1):
         train_metrics = train_one_epoch(
             model,
             train_loader,
@@ -521,6 +593,11 @@ def fit_classifier(
             "learning_rate": train_metrics["learning_rate"],
         }
         history.append(history_entry)
+        save_training_history(
+            history,
+            json_path=history_json_path,
+            csv_path=history_csv_path,
+        )
 
         current_score = float(history_entry[monitor_name])
         improved, should_stop = early_stopping.update(current_score, epoch)
@@ -590,6 +667,7 @@ def fit_classifier(
         "best_score": early_stopping.best_score,
         "epochs_completed": len(history),
         "amp_enabled": amp_enabled,
+        "resumed_from_epoch": resumed_from_epoch,
     }
 
 
