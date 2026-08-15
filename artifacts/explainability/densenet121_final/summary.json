@@ -1,0 +1,233 @@
+{
+  "checkpoint": "artifacts/models/comparison/densenet121_seed42/best.pt",
+  "checkpoint_epoch": 13,
+  "architecture": "densenet121",
+  "target_layer": "features.denseblock4.denselayer16.conv2",
+  "explanation_method": "Grad-CAM",
+  "generated_case_count": 13,
+  "generated_cases": [
+    {
+      "relative_path": "dataset/train/glioma/Tr-gl_0302.jpg",
+      "true_class": "glioma",
+      "predicted_class": "glioma",
+      "model_confidence": 0.9999997615814209,
+      "target_class": "glioma",
+      "border_attention_ratio": 0.20262974500656128,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__glioma__Tr-gl_0302.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__glioma__Tr-gl_0302.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__glioma__Tr-gl_0302.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__glioma__Tr-gl_0302.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/test/glioma/Te-gl_0020.jpg",
+      "true_class": "glioma",
+      "predicted_class": "glioma",
+      "model_confidence": 0.9999996423721313,
+      "target_class": "glioma",
+      "border_attention_ratio": 0.192925363779068,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__test__glioma__Te-gl_0020.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__test__glioma__Te-gl_0020.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__test__glioma__Te-gl_0020.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__test__glioma__Te-gl_0020.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/meningioma/Tr-me_0252.jpg",
+      "true_class": "meningioma",
+      "predicted_class": "meningioma",
+      "model_confidence": 1.0,
+      "target_class": "meningioma",
+      "border_attention_ratio": 0.2030584216117859,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_0252.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_0252.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_0252.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_0252.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/meningioma/Tr-me_0268.jpg",
+      "true_class": "meningioma",
+      "predicted_class": "meningioma",
+      "model_confidence": 0.9999998807907104,
+      "target_class": "meningioma",
+      "border_attention_ratio": 0.21479207277297974,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_0268.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_0268.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_0268.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_0268.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/pituitary/Tr-pi_0341.jpg",
+      "true_class": "pituitary",
+      "predicted_class": "pituitary",
+      "model_confidence": 0.9999996423721313,
+      "target_class": "pituitary",
+      "border_attention_ratio": 0.17383773624897003,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__pituitary__Tr-pi_0341.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__pituitary__Tr-pi_0341.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__pituitary__Tr-pi_0341.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__pituitary__Tr-pi_0341.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/pituitary/Tr-pi_0236.jpg",
+      "true_class": "pituitary",
+      "predicted_class": "pituitary",
+      "model_confidence": 0.9999979734420776,
+      "target_class": "pituitary",
+      "border_attention_ratio": 0.19279420375823975,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__pituitary__Tr-pi_0236.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__pituitary__Tr-pi_0236.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__pituitary__Tr-pi_0236.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__pituitary__Tr-pi_0236.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/test/notumor/Te-no_0080.jpg",
+      "true_class": "no_tumor",
+      "predicted_class": "no_tumor",
+      "model_confidence": 1.0,
+      "target_class": "no_tumor",
+      "border_attention_ratio": 0.24754923582077026,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__test__notumor__Te-no_0080.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__test__notumor__Te-no_0080.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__test__notumor__Te-no_0080.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__test__notumor__Te-no_0080.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/test/notumor/Te-no_0197.jpg",
+      "true_class": "no_tumor",
+      "predicted_class": "no_tumor",
+      "model_confidence": 1.0,
+      "target_class": "no_tumor",
+      "border_attention_ratio": 0.2575686275959015,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__test__notumor__Te-no_0197.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__test__notumor__Te-no_0197.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__test__notumor__Te-no_0197.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__test__notumor__Te-no_0197.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/meningioma/Tr-me_1336.jpg",
+      "true_class": "meningioma",
+      "predicted_class": "pituitary",
+      "model_confidence": 0.9208652377128601,
+      "target_class": "pituitary",
+      "border_attention_ratio": 0.062070511281490326,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_1336.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_1336.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_1336.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_1336.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/meningioma/Tr-me_1059.jpg",
+      "true_class": "meningioma",
+      "predicted_class": "glioma",
+      "model_confidence": 0.8312943577766418,
+      "target_class": "glioma",
+      "border_attention_ratio": 0.22815504670143127,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_1059.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_1059.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_1059.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_1059.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/meningioma/Tr-me_1065.jpg",
+      "true_class": "meningioma",
+      "predicted_class": "pituitary",
+      "model_confidence": 0.5574826598167419,
+      "target_class": "pituitary",
+      "border_attention_ratio": 0.31428444385528564,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_1065.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_1065.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_1065.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_1065.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/glioma/Tr-gl_1181.jpg",
+      "true_class": "glioma",
+      "predicted_class": "meningioma",
+      "model_confidence": 0.533537745475769,
+      "target_class": "meningioma",
+      "border_attention_ratio": 0.25858667492866516,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__glioma__Tr-gl_1181.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__glioma__Tr-gl_1181.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__glioma__Tr-gl_1181.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__glioma__Tr-gl_1181.jpg.json"
+      }
+    },
+    {
+      "relative_path": "dataset/train/meningioma/Tr-me_1119.jpg",
+      "true_class": "meningioma",
+      "predicted_class": "pituitary",
+      "model_confidence": 0.39836788177490234,
+      "target_class": "pituitary",
+      "border_attention_ratio": 0.2564961910247803,
+      "output_paths": {
+        "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_1119.jpg_original.png",
+        "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_1119.jpg_heatmap.png",
+        "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_1119.jpg_overlay.png",
+        "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_1119.jpg.json"
+      }
+    }
+  ],
+  "review_grid": "artifacts/explainability/densenet121_final/review_grid.png",
+  "representative_case_counts": {
+    "glioma": 2,
+    "meningioma": 2,
+    "pituitary": 2,
+    "no_tumor": 2
+  },
+  "incorrect_case_count": 5,
+  "highest_confidence_error": {
+    "relative_path": "dataset/train/meningioma/Tr-me_1336.jpg",
+    "true_class": "meningioma",
+    "predicted_class": "pituitary",
+    "model_confidence": 0.9208652377128601,
+    "target_class": "pituitary",
+    "border_attention_ratio": 0.062070511281490326,
+    "output_paths": {
+      "original": "artifacts/explainability/densenet121_final/original/dataset__train__meningioma__Tr-me_1336.jpg_original.png",
+      "heatmap": "artifacts/explainability/densenet121_final/heatmap/dataset__train__meningioma__Tr-me_1336.jpg_heatmap.png",
+      "overlay": "artifacts/explainability/densenet121_final/overlay/dataset__train__meningioma__Tr-me_1336.jpg_overlay.png",
+      "metadata": "artifacts/explainability/densenet121_final/metadata/dataset__train__meningioma__Tr-me_1336.jpg.json"
+    }
+  },
+  "border_attention_summary": {
+    "mean_border_attention_ratio": 0.19371348155009283,
+    "mean_border_attention_ratio_correct": 0.19161590571618742,
+    "mean_border_attention_ratio_incorrect": 0.22391857355833053,
+    "suspicious_border_attention_cases": []
+  },
+  "sanity_checks": {
+    "diagnostic_sample_count": 77,
+    "zero_map_count": 0,
+    "nan_or_inf_case_count": 0,
+    "parameter_preservation_verified": true,
+    "no_surrogate_model_used": true
+  },
+  "target_class_sensitivity": {
+    "relative_path": "dataset/train/glioma/Tr-gl_0302.jpg",
+    "predicted_class": "glioma",
+    "alternate_target_class": "meningioma",
+    "mean_absolute_heatmap_difference": 0.37486976385116577
+  }
+}

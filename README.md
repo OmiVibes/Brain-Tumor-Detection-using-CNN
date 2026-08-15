@@ -28,7 +28,7 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 2C - frozen architecture comparison and final backbone decision**
+Current milestone: **Phase 2D - DenseNet121 explainability, calibration, and safe-inference migration**
 
 What is implemented through Phase 1E:
 
@@ -84,12 +84,21 @@ What is implemented in Phase 2C:
 - paired ResNet18 vs DenseNet121 disagreement analysis with exact McNemar test
 - final backbone decision artifact and comparison documentation
 
+What is implemented in Phase 2D:
+
+- architecture-aware Grad-CAM target-layer resolution for ResNet18 and DenseNet121
+- DenseNet121 Grad-CAM artifacts and diagnostics under `artifacts/explainability/densenet121_final/`
+- DenseNet121 validation-only calibration migration with frozen temperature artifact
+- DenseNet121 train-feature OOD reference and validation-derived OOD thresholds
+- DenseNet121 frozen abstention policy and held-out robustness evaluation
+- DenseNet121 risk-coverage, perturbation, synthetic OOD, and safe-latency artifacts
+- default BrainScanAI safe-inference backbone switched to DenseNet121
+
 What is intentionally **not** implemented yet:
 
 - FastAPI
 - React frontend
 - segmentation
-- DenseNet121 migration of Grad-CAM, calibration, OOD, safe inference, and robustness artifacts
 
 ## Current Supported Functionality
 
@@ -113,7 +122,7 @@ What is intentionally **not** implemented yet:
 - ResNet18 classifier creation in `src/brainscan/models/classifier.py`
 - reusable classifier training loop in `src/brainscan/training/train_classifier.py`
 - training orchestration script in `scripts/train.py`
-- scientifically correct ResNet18 Grad-CAM in `src/brainscan/explainability/gradcam.py`
+- scientifically correct architecture-aware Grad-CAM in `src/brainscan/explainability/gradcam.py`
 - explanation generation script in `scripts/generate_gradcam.py`
 - calibration and uncertainty tooling in `src/brainscan/uncertainty/`
 - calibration study script in `scripts/calibrate.py`
@@ -592,9 +601,46 @@ Why:
 Trade-off:
 
 - DenseNet121 is about `4x` slower on the apples-to-apples comparison benchmark
-- downstream migration is still required for Grad-CAM, calibration, OOD, safe inference, and robustness artifacts
+- the full migrated safe-inference stack is also slower and more conservative than the historical ResNet18 safety layer
 
 Full comparison details are documented in [docs/model_comparison.md](docs/model_comparison.md).
+
+## DenseNet121 Deployment Migration
+
+Phase 2D completes the migration of the deployment stack from the historical ResNet18 baseline to the frozen DenseNet121 finalist.
+
+Default BrainScanAI safe-inference backbone:
+
+- architecture: `densenet121`
+- checkpoint: `artifacts/models/comparison/densenet121_seed42/best.pt`
+- Grad-CAM target layer: `features.denseblock4.denselayer16.conv2`
+- OOD feature layer: `features.norm5 -> relu -> adaptive_avg_pool2d`
+- feature dimension: `1024`
+- probability mode: `calibrated`
+
+DenseNet121 calibration:
+
+- learned temperature: `0.8621`
+- validation ECE before/after: `0.004602 / 0.004211`
+- held-out test ECE before/after: `0.005982 / 0.005018`
+
+DenseNet121 held-out safety behavior:
+
+- classifier errors: `5`
+- `ACCEPT`: `153 / 702` (`21.8%`)
+- `REVIEW`: `519 / 702` (`73.9%`)
+- `ABSTAIN`: `30 / 702` (`4.3%`)
+- unsafe accepted errors: `0`
+- error-capture rate: `100.0%`
+- safe-inference mean latency: `59.34 ms/image`
+
+DenseNet121 is therefore the correct default classifier backbone, but the migrated safe pipeline is more conservative and slower than the historical ResNet18 safety stack.
+
+DenseNet migration write-ups:
+
+- [docs/densenet121_explainability.md](docs/densenet121_explainability.md)
+- [docs/densenet121_calibration.md](docs/densenet121_calibration.md)
+- [docs/densenet121_robustness.md](docs/densenet121_robustness.md)
 
 ## Training
 
@@ -622,6 +668,12 @@ Run Grad-CAM explainability generation:
 .venv\Scripts\python.exe scripts\generate_gradcam.py
 ```
 
+Run historical ResNet18 Grad-CAM explicitly:
+
+```powershell
+.venv\Scripts\python.exe scripts\generate_gradcam.py --config configs/train.yaml --checkpoint-path artifacts/models/resnet18_baseline_best.pt --reference-metrics-path artifacts/training/resnet18_baseline_history.json --predictions-csv-path artifacts/evaluation/resnet18_baseline/predictions.csv --errors-csv-path artifacts/evaluation/resnet18_baseline/errors.csv --output-dir artifacts/explainability/resnet18_baseline
+```
+
 Run Grad-CAM for one specific image:
 
 ```powershell
@@ -644,6 +696,12 @@ Run the formal robustness and abstention study:
 
 ```powershell
 .venv\Scripts\python.exe scripts\evaluate_robustness.py
+```
+
+Run the historical ResNet18 robustness study explicitly:
+
+```powershell
+.venv\Scripts\python.exe scripts\evaluate_robustness.py --config configs/train.yaml --checkpoint-path artifacts/models/resnet18_baseline_best.pt --ood-reference-npz artifacts/robustness/resnet18_baseline/ood_reference.npz --ood-reference-json artifacts/robustness/resnet18_baseline/ood_reference.json --quality-thresholds-path artifacts/robustness/resnet18_baseline/quality_thresholds.json --uncertainty-metrics-path artifacts/calibration/resnet18_baseline/metrics.json --policy-path artifacts/robustness/resnet18_baseline/abstention_policy.json --frozen-validation-summary-path artifacts/robustness/resnet18_baseline/validation_policy_summary.json --classifier-performance-path artifacts/evaluation/resnet18_baseline/performance.json --output-dir artifacts/robustness/resnet18_baseline
 ```
 
 Run architecture-comparison training:

@@ -38,11 +38,12 @@ from brainscan.uncertainty.metrics import (
 )
 
 
-DEFAULT_CHECKPOINT_PATH = Path("artifacts/models/resnet18_baseline_best.pt")
-DEFAULT_OOD_REFERENCE_NPZ_PATH = Path("artifacts/robustness/resnet18_baseline/ood_reference.npz")
-DEFAULT_OOD_REFERENCE_JSON_PATH = Path("artifacts/robustness/resnet18_baseline/ood_reference.json")
-DEFAULT_QUALITY_THRESHOLDS_PATH = Path("artifacts/robustness/resnet18_baseline/quality_thresholds.json")
-DEFAULT_UNCERTAINTY_METRICS_PATH = Path("artifacts/calibration/resnet18_baseline/metrics.json")
+DEFAULT_CONFIG_PATH = Path("configs/densenet121_final.yaml")
+DEFAULT_CHECKPOINT_PATH = Path("artifacts/models/comparison/densenet121_seed42/best.pt")
+DEFAULT_OOD_REFERENCE_NPZ_PATH = Path("artifacts/robustness/densenet121_final/ood_reference.npz")
+DEFAULT_OOD_REFERENCE_JSON_PATH = Path("artifacts/robustness/densenet121_final/ood_reference.json")
+DEFAULT_QUALITY_THRESHOLDS_PATH = Path("artifacts/robustness/densenet121_final/quality_thresholds.json")
+DEFAULT_UNCERTAINTY_METRICS_PATH = Path("artifacts/calibration/densenet121_final/metrics.json")
 
 @dataclass(frozen=True)
 class PredictionResult:
@@ -114,7 +115,7 @@ class BrainScanInferencePipeline:
     def __init__(
         self,
         *,
-        config_path: str | Path = "configs/train.yaml",
+        config_path: str | Path = DEFAULT_CONFIG_PATH,
         checkpoint_path: str | Path = DEFAULT_CHECKPOINT_PATH,
         ood_reference_npz_path: str | Path = DEFAULT_OOD_REFERENCE_NPZ_PATH,
         ood_reference_json_path: str | Path = DEFAULT_OOD_REFERENCE_JSON_PATH,
