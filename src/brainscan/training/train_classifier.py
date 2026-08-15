@@ -27,6 +27,7 @@ matplotlib.use("Agg")
 
 
 HistoryEntry = dict[str, float | int]
+TrainingState = dict[str, float | int | bool | None]
 
 
 @dataclass
@@ -407,6 +408,33 @@ def load_training_history(history_json_path: str | Path) -> list[HistoryEntry]:
     return payload
 
 
+def _resolve_training_state_path(history_json_path: str | Path) -> Path:
+    resolved_history = resolve_project_path(history_json_path)
+    return resolved_history.with_name("training_state.json")
+
+
+def load_training_state(history_json_path: str | Path) -> TrainingState:
+    resolved_state = _resolve_training_state_path(history_json_path)
+    if not resolved_state.exists():
+        return {
+            "cumulative_training_duration_seconds": 0.0,
+            "last_completed_epoch": 0,
+        }
+    with resolved_state.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if not isinstance(payload, dict):
+        raise TypeError("Training state JSON must contain an object payload.")
+    return payload  # type: ignore[return-value]
+
+
+def save_training_state(history_json_path: str | Path, payload: TrainingState) -> Path:
+    resolved_state = _resolve_training_state_path(history_json_path)
+    resolved_state.parent.mkdir(parents=True, exist_ok=True)
+    with resolved_state.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+    return resolved_state
+
+
 def plot_training_curves(history: list[HistoryEntry], output_dir: str | Path) -> list[Path]:
     """Plot loss, accuracy, and F1 curves from saved history."""
     if not history:
@@ -503,6 +531,8 @@ def fit_classifier(
     early_stopping = EarlyStoppingMonitor(mode=monitor_mode, patience=patience)
     history: list[HistoryEntry] = []
     resumed_from_epoch: int | None = None
+    cumulative_training_duration_seconds = 0.0
+    segment_training_duration_seconds = 0.0
     best_checkpoint_resolved = resolve_project_path(best_checkpoint_path)
     last_checkpoint_resolved = resolve_project_path(last_checkpoint_path)
     history_json_resolved = resolve_project_path(history_json_path)
@@ -524,6 +554,12 @@ def fit_classifier(
             raise FileNotFoundError(
                 f"Best checkpoint missing for resumable run: {best_checkpoint_resolved}"
             )
+        training_state = load_training_state(history_json_resolved)
+        if int(training_state.get("last_completed_epoch", 0)) not in {0, int(checkpoint["epoch"])}:
+            raise ValueError("Training state and last checkpoint epoch are out of sync; refusing automatic resume.")
+        cumulative_training_duration_seconds = float(
+            training_state.get("cumulative_training_duration_seconds", 0.0)
+        )
         for history_entry in history:
             early_stopping.update(float(history_entry[monitor_name]), int(history_entry["epoch"]))
         resumed_from_epoch = int(checkpoint["epoch"])
@@ -557,9 +593,12 @@ def fit_classifier(
             "epochs_completed": len(history),
             "amp_enabled": amp_enabled,
             "resumed_from_epoch": resumed_from_epoch,
+            "segment_training_duration_seconds": segment_training_duration_seconds,
+            "cumulative_training_duration_seconds": cumulative_training_duration_seconds,
         }
 
     for epoch in range(start_epoch, max_epochs + 1):
+        epoch_start = __import__("time").perf_counter()
         train_metrics = train_one_epoch(
             model,
             train_loader,
@@ -598,6 +637,16 @@ def fit_classifier(
             json_path=history_json_path,
             csv_path=history_csv_path,
         )
+        epoch_duration_seconds = __import__("time").perf_counter() - epoch_start
+        segment_training_duration_seconds += epoch_duration_seconds
+        cumulative_training_duration_seconds += epoch_duration_seconds
+        save_training_state(
+            history_json_path,
+            {
+                "cumulative_training_duration_seconds": cumulative_training_duration_seconds,
+                "last_completed_epoch": epoch,
+            },
+        )
 
         current_score = float(history_entry[monitor_name])
         improved, should_stop = early_stopping.update(current_score, epoch)
@@ -609,6 +658,7 @@ def fit_classifier(
             **checkpoint_metadata,
             "epoch": epoch,
             "validation_score": current_score,
+            "cumulative_training_duration_seconds": cumulative_training_duration_seconds,
         }
 
         save_checkpoint(
@@ -668,6 +718,8 @@ def fit_classifier(
         "epochs_completed": len(history),
         "amp_enabled": amp_enabled,
         "resumed_from_epoch": resumed_from_epoch,
+        "segment_training_duration_seconds": segment_training_duration_seconds,
+        "cumulative_training_duration_seconds": cumulative_training_duration_seconds,
     }
 
 

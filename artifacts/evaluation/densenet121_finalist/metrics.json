@@ -1,0 +1,197 @@
+{
+  "checkpoint": {
+    "path": "artifacts/models/comparison/densenet121_seed42/best.pt",
+    "epoch": 13,
+    "architecture": "densenet121",
+    "validation_score": 0.9944200759418182,
+    "experiment_name": "densenet121_seed42",
+    "seed": 42
+  },
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "test_sample_count": 702,
+  "class_mapping": {
+    "glioma": 0,
+    "meningioma": 1,
+    "pituitary": 2,
+    "no_tumor": 3
+  },
+  "overall_metrics": {
+    "accuracy": 0.9928774928774928,
+    "balanced_accuracy": 0.992359229147847,
+    "precision_macro": 0.9927140509583227,
+    "recall_macro": 0.992359229147847,
+    "f1_macro": 0.9924979602209649,
+    "precision_weighted": 0.9929225723493396,
+    "recall_weighted": 0.9928774928774928,
+    "f1_weighted": 0.9928626768280072,
+    "roc_auc_macro_ovr": 0.9999829506514044
+  },
+  "per_class_metrics": {
+    "glioma": {
+      "precision": 0.9938271604938271,
+      "recall": 0.9938271604938271,
+      "f1": 0.9938271604938271,
+      "support": 162,
+      "specificity": 0.9981481481481481,
+      "roc_auc_ovr": 0.9999771376314587,
+      "pr_auc_average_precision": 0.9999240258714117
+    },
+    "meningioma": {
+      "precision": 0.9937888198757764,
+      "recall": 0.975609756097561,
+      "f1": 0.9846153846153847,
+      "support": 164,
+      "specificity": 0.9981412639405205,
+      "roc_auc_ovr": 0.9999546649741591,
+      "pr_auc_average_precision": 0.99985081722032
+    },
+    "pituitary": {
+      "precision": 0.9832402234636871,
+      "recall": 1.0,
+      "f1": 0.9915492957746479,
+      "support": 176,
+      "specificity": 0.9942965779467681,
+      "roc_auc_ovr": 1.0,
+      "pr_auc_average_precision": 1.0
+    },
+    "no_tumor": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 200,
+      "specificity": 1.0,
+      "roc_auc_ovr": 1.0,
+      "pr_auc_average_precision": 1.0
+    }
+  },
+  "evaluation_timestamp_utc": "2026-08-15T19:33:07.112703+00:00",
+  "git_commit": "11932fc8af053766e4cc86b632bd6fffedb73798",
+  "torch_version": "2.12.1+cu130",
+  "cuda_runtime": "13.0",
+  "device_info": {
+    "device_type": "cuda",
+    "device_name": "NVIDIA GeForce GTX 1650",
+    "cuda_available": true,
+    "cuda_runtime": "13.0",
+    "vram_bytes": 4294639616,
+    "vram_gb": 4.0
+  },
+  "performance": {
+    "device_type": "cuda",
+    "batch_size": 8,
+    "warmup_iterations": 10,
+    "timed_iterations": 50,
+    "mean_batch_latency_ms": 55.47172199985653,
+    "mean_per_image_latency_ms": 6.933965249982066,
+    "throughput_images_per_second": 144.2176249733277,
+    "checkpoint_load_time_ms": 895.0354000007792,
+    "full_test_wall_time_seconds": 17.469908299999588,
+    "end_to_end_images_per_second": 40.183382073048236,
+    "peak_benchmark_vram_mb": 116.81
+  },
+  "limitations": {
+    "subject_level_leakage_cannot_be_ruled_out": true,
+    "near_duplicate_candidates_exist": true,
+    "clinical_validation": false
+  },
+  "frozen_finalist": {
+    "selection_path": "artifacts/model_comparison/selection_decision.json",
+    "architecture": "densenet121",
+    "experiment_name": "densenet121_seed42",
+    "seed": 42,
+    "best_epoch": 13,
+    "validation_macro_f1": 0.9944200759418182
+  },
+  "confidence_analysis": {
+    "mean_confidence_correct": 0.9959833773342062,
+    "mean_confidence_incorrect": 0.6483095169067383,
+    "median_confidence_correct": 0.9999562501907349,
+    "median_confidence_incorrect": 0.5574821829795837,
+    "incorrect_confidence_ge_090": 1,
+    "incorrect_confidence_ge_095": 0,
+    "predictions_top1_top2_margin_lt_010": 2
+  },
+  "near_duplicate_sensitivity": {
+    "flagged_test_count": 74,
+    "filtered_subset": {
+      "subset_size": 628,
+      "metrics": {
+        "overall_metrics": {
+          "accuracy": 0.9920382165605095,
+          "balanced_accuracy": 0.9917870657034744,
+          "precision_macro": 0.9921149899911947,
+          "recall_macro": 0.9917870657034744,
+          "f1_macro": 0.9919054968439374,
+          "precision_weighted": 0.9920935411155934,
+          "recall_weighted": 0.9920382165605095,
+          "f1_weighted": 0.9920205879145296,
+          "roc_auc_macro_ovr": 0.9999792987370386
+        },
+        "per_class_metrics": {
+          "glioma": {
+            "precision": 0.9934640522875817,
+            "recall": 0.9934640522875817,
+            "f1": 0.9934640522875817,
+            "support": 153,
+            "specificity": 0.9978947368421053,
+            "roc_auc_ovr": 0.9999724802201582,
+            "pr_auc_average_precision": 0.9999148401685884
+          },
+          "meningioma": {
+            "precision": 0.9932885906040269,
+            "recall": 0.9736842105263158,
+            "f1": 0.9833887043189369,
+            "support": 152,
+            "specificity": 0.9978991596638656,
+            "roc_auc_ovr": 0.9999447147279965,
+            "pr_auc_average_precision": 0.9998262889585275
+          },
+          "pituitary": {
+            "precision": 0.9817073170731707,
+            "recall": 1.0,
+            "f1": 0.9907692307692307,
+            "support": 161,
+            "specificity": 0.9935760171306209,
+            "roc_auc_ovr": 0.9999999999999999,
+            "pr_auc_average_precision": 1.0
+          },
+          "no_tumor": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 162,
+            "specificity": 1.0,
+            "roc_auc_ovr": 1.0,
+            "pr_auc_average_precision": 1.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            152,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            148,
+            3,
+            0
+          ],
+          [
+            0,
+            0,
+            161,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            162
+          ]
+        ]
+      }
+    }
+  }
+}

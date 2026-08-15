@@ -1,0 +1,13 @@
+{
+  "paired_counts": {
+    "both_correct": 685,
+    "both_wrong": 1,
+    "reference_correct_challenger_wrong": 4,
+    "challenger_correct_reference_wrong": 12
+  },
+  "mcnemar_exact": {
+    "discordant_pairs": 16,
+    "two_sided_p_value": 0.076812744140625,
+    "method": "exact binomial"
+  }
+}

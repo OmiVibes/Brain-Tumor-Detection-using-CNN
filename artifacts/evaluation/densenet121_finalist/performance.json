@@ -1,0 +1,13 @@
+{
+  "device_type": "cuda",
+  "batch_size": 8,
+  "warmup_iterations": 10,
+  "timed_iterations": 50,
+  "mean_batch_latency_ms": 55.47172199985653,
+  "mean_per_image_latency_ms": 6.933965249982066,
+  "throughput_images_per_second": 144.2176249733277,
+  "checkpoint_load_time_ms": 895.0354000007792,
+  "full_test_wall_time_seconds": 17.469908299999588,
+  "end_to_end_images_per_second": 40.183382073048236,
+  "peak_benchmark_vram_mb": 116.81
+}

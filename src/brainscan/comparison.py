@@ -39,7 +39,9 @@ class RunSummary:
     best_validation_macro_f1: float
     best_validation_loss: float
     epochs_completed: int
-    training_duration_seconds: float
+    training_duration_seconds: float | None
+    training_duration_complete: bool
+    training_duration_note: str | None
     mean_per_image_latency_ms: float
     throughput_images_per_second: float
     checkpoint_load_time_ms: float | None
@@ -71,6 +73,8 @@ class RunSummary:
             "best_validation_loss": self.best_validation_loss,
             "epochs_completed": self.epochs_completed,
             "training_duration_seconds": self.training_duration_seconds,
+            "training_duration_complete": self.training_duration_complete,
+            "training_duration_note": self.training_duration_note,
             "mean_per_image_latency_ms": self.mean_per_image_latency_ms,
             "throughput_images_per_second": self.throughput_images_per_second,
             "checkpoint_load_time_ms": self.checkpoint_load_time_ms,
@@ -151,6 +155,15 @@ def save_json_artifact(payload: dict[str, object], output_path: str | Path) -> P
     return resolved_path
 
 
+def load_json_artifact(input_path: str | Path) -> dict[str, object]:
+    resolved_path = resolve_project_path(input_path)
+    with resolved_path.open("r", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if not isinstance(payload, dict):
+        raise TypeError(f"Expected a JSON object in {resolved_path}, found {type(payload).__name__}.")
+    return payload
+
+
 def summarize_history_best_metrics(history: Sequence[dict[str, object]]) -> dict[str, float | int]:
     if not history:
         raise ValueError("Cannot summarize empty training history.")
@@ -166,11 +179,54 @@ def summarize_history_best_metrics(history: Sequence[dict[str, object]]) -> dict
     }
 
 
+def audit_training_duration_payload(summary_payload: dict[str, object]) -> dict[str, object]:
+    cumulative_duration = summary_payload.get("cumulative_training_duration_seconds")
+    resumed_from_epoch = summary_payload.get("resumed_from_epoch")
+    reported_duration = summary_payload.get("training_duration_seconds")
+
+    if cumulative_duration is not None:
+        return {
+            "status": "complete",
+            "reported_training_duration_seconds": float(cumulative_duration),
+            "corrected_training_duration_seconds": float(cumulative_duration),
+            "note": "Cumulative training duration was persisted across resumed segments.",
+        }
+
+    if resumed_from_epoch is not None:
+        return {
+            "status": "incomplete",
+            "reported_training_duration_seconds": (
+                float(reported_duration) if reported_duration is not None else None
+            ),
+            "corrected_training_duration_seconds": None,
+            "note": (
+                "Only the latest resumed training segment duration is available in summary metadata; "
+                "the cumulative total cannot be reconstructed reliably from the existing artifacts."
+            ),
+        }
+
+    if reported_duration is None:
+        return {
+            "status": "unknown",
+            "reported_training_duration_seconds": None,
+            "corrected_training_duration_seconds": None,
+            "note": "No training duration was recorded in the summary payload.",
+        }
+
+    return {
+        "status": "complete",
+        "reported_training_duration_seconds": float(reported_duration),
+        "corrected_training_duration_seconds": float(reported_duration),
+        "note": "Single uninterrupted training segment recorded in the summary payload.",
+    }
+
+
 def run_summary_from_payload(summary_payload: dict[str, object]) -> RunSummary:
     history = summary_payload["history"]
     if not isinstance(history, list):
         raise TypeError("Comparison summary payload must contain a list-valued 'history'.")
     best_metrics = summarize_history_best_metrics(history)
+    duration_audit = audit_training_duration_payload(summary_payload)
     model_metadata = summary_payload["model_metadata"]
     benchmark = summary_payload["benchmark"]
     device_info = summary_payload["device_info"]
@@ -196,7 +252,15 @@ def run_summary_from_payload(summary_payload: dict[str, object]) -> RunSummary:
         best_validation_macro_f1=float(best_metrics["best_validation_macro_f1"]),
         best_validation_loss=float(best_metrics["best_validation_loss"]),
         epochs_completed=int(summary_payload["epochs_completed"]),
-        training_duration_seconds=float(summary_payload["training_duration_seconds"]),
+        training_duration_seconds=(
+            float(duration_audit["corrected_training_duration_seconds"])
+            if duration_audit["corrected_training_duration_seconds"] is not None
+            else None
+        ),
+        training_duration_complete=duration_audit["status"] == "complete",
+        training_duration_note=(
+            str(duration_audit["note"]) if duration_audit.get("note") is not None else None
+        ),
         mean_per_image_latency_ms=float(benchmark["mean_per_image_latency_ms"]),
         throughput_images_per_second=float(benchmark["throughput_images_per_second"]),
         checkpoint_load_time_ms=(
@@ -237,6 +301,91 @@ def _std(values: Sequence[float]) -> float | None:
     mean_value = _mean(values)
     variance = sum((value - mean_value) ** 2 for value in values) / (len(values) - 1)
     return float(math.sqrt(variance))
+
+
+def load_selection_decision(selection_path: str | Path = "artifacts/model_comparison/selection_decision.json") -> dict[str, object]:
+    return load_json_artifact(selection_path)
+
+
+def resolve_selected_architecture_row(selection_payload: dict[str, object]) -> dict[str, object]:
+    selected_architecture = str(selection_payload["selected_architecture"])
+    ranked_architectures = selection_payload.get("ranked_architectures")
+    if not isinstance(ranked_architectures, list):
+        raise TypeError("Selection payload must contain a 'ranked_architectures' list.")
+    for row in ranked_architectures:
+        if isinstance(row, dict) and str(row.get("architecture")) == selected_architecture:
+            return row
+    raise ValueError(f"Selected architecture '{selected_architecture}' was not found in ranked_architectures.")
+
+
+def resolve_frozen_finalist(
+    *,
+    selection_path: str | Path = "artifacts/model_comparison/selection_decision.json",
+    comparison_training_dir: str | Path = "artifacts/training/comparison",
+) -> dict[str, object]:
+    selection_payload = load_selection_decision(selection_path)
+    selected_row = resolve_selected_architecture_row(selection_payload)
+
+    experiment_name = selected_row.get("best_run_experiment_name")
+    if experiment_name is None:
+        selected_experiment_names = selection_payload.get("selected_experiment_names")
+        if not isinstance(selected_experiment_names, list) or len(selected_experiment_names) != 1:
+            raise ValueError("Unable to resolve a unique frozen finalist experiment from the selection artifact.")
+        experiment_name = selected_experiment_names[0]
+
+    summary_path = Path(comparison_training_dir) / str(experiment_name) / "summary.json"
+    summary_payload = load_json_artifact(summary_path)
+    return {
+        "selection_path": str(selection_path).replace("\\", "/"),
+        "architecture": str(selection_payload["selected_architecture"]),
+        "experiment_name": str(experiment_name),
+        "seed": int(summary_payload["seed"]),
+        "checkpoint_path": str(summary_payload["best_checkpoint_path"]),
+        "summary_path": str(summary_path).replace("\\", "/"),
+        "best_epoch": int(summary_payload["best_epoch"]),
+        "validation_macro_f1": float(summary_payload["best_validation_macro_f1"]),
+        "dataset_fingerprint": str(summary_payload["dataset_fingerprint"]),
+        "batch_size": int(summary_payload["batch_size"]),
+        "summary_payload": summary_payload,
+        "selected_row": selected_row,
+    }
+
+
+def build_benchmark_metadata_audit(
+    summary_payloads: Sequence[dict[str, object]],
+    *,
+    dataset_fingerprint: str,
+    git_commit: str | None,
+) -> dict[str, object]:
+    run_audits: list[dict[str, object]] = []
+    incomplete_runs: list[str] = []
+
+    for payload in summary_payloads:
+        duration_audit = audit_training_duration_payload(payload)
+        run_record = {
+            "experiment_name": str(payload["experiment_name"]),
+            "architecture": str(payload["architecture"]),
+            "seed": int(payload["seed"]),
+            "epochs_completed": int(payload["epochs_completed"]),
+            "resumed_from_epoch": payload.get("resumed_from_epoch"),
+            **duration_audit,
+        }
+        run_audits.append(run_record)
+        if duration_audit["status"] != "complete":
+            incomplete_runs.append(str(payload["experiment_name"]))
+
+    return {
+        "dataset_fingerprint": dataset_fingerprint,
+        "git_commit": git_commit,
+        "audit_timestamp_utc": __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat(),
+        "duration_accounting_policy": {
+            "complete": "duration is cumulative across all recorded training segments",
+            "incomplete": "only the latest resumed segment duration is known; cumulative total is unavailable",
+            "unknown": "no trustworthy duration information exists in the available payload",
+        },
+        "runs": run_audits,
+        "incomplete_runs": incomplete_runs,
+    }
 
 
 def aggregate_architecture_runs(run_summaries: Sequence[RunSummary]) -> list[dict[str, object]]:
@@ -285,8 +434,20 @@ def aggregate_architecture_runs(run_summaries: Sequence[RunSummary]) -> list[dic
                 "worst_validation_macro_f1": min(macro_f1_values),
                 "best_validation_loss": min(row.best_validation_loss for row in ordered_runs),
                 "best_epoch": best_run.best_epoch,
-                "training_duration_seconds_mean": _mean([row.training_duration_seconds for row in ordered_runs]),
-                "training_duration_seconds_max": max(row.training_duration_seconds for row in ordered_runs),
+                "training_duration_seconds_mean": (
+                    _mean([row.training_duration_seconds for row in ordered_runs if row.training_duration_seconds is not None])
+                    if all(row.training_duration_seconds is not None for row in ordered_runs)
+                    else None
+                ),
+                "training_duration_seconds_max": (
+                    max(row.training_duration_seconds for row in ordered_runs if row.training_duration_seconds is not None)
+                    if all(row.training_duration_seconds is not None for row in ordered_runs)
+                    else None
+                ),
+                "training_duration_complete": all(row.training_duration_complete for row in ordered_runs),
+                "training_duration_note": None
+                if all(row.training_duration_complete for row in ordered_runs)
+                else "One or more runs have incomplete cumulative training-duration metadata.",
                 "mean_per_image_latency_ms": _mean([row.mean_per_image_latency_ms for row in ordered_runs]),
                 "throughput_images_per_second": _mean(
                     [row.throughput_images_per_second for row in ordered_runs]

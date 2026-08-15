@@ -1,0 +1,219 @@
+{
+  "frozen_finalist": {
+    "architecture": "densenet121",
+    "experiment_name": "densenet121_seed42",
+    "seed": 42,
+    "checkpoint_path": "artifacts/models/comparison/densenet121_seed42/best.pt",
+    "best_epoch": 13,
+    "validation_macro_f1": 0.9944200759418182
+  },
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "validation_evidence": {
+    "selection_path": "artifacts/model_comparison/selection_decision.json",
+    "selected_architecture": "densenet121",
+    "selected_mean_validation_macro_f1": 0.9930403736576712,
+    "selected_validation_macro_f1_std": 0.0019511936822778561,
+    "selected_run_count": 2,
+    "selected_seeds": [
+      42,
+      1337
+    ]
+  },
+  "challenger_test_metrics": {
+    "sample_count": 702,
+    "overall_metrics": {
+      "accuracy": 0.9928774928774928,
+      "balanced_accuracy": 0.992359229147847,
+      "precision_macro": 0.9927140509583227,
+      "recall_macro": 0.992359229147847,
+      "f1_macro": 0.9924979602209649,
+      "precision_weighted": 0.9929225723493396,
+      "recall_weighted": 0.9928774928774928,
+      "f1_weighted": 0.9928626768280072,
+      "roc_auc_macro_ovr": 0.9999829506514044
+    },
+    "total_errors": 5,
+    "major_confusion_pairs": [
+      {
+        "true_class": "meningioma",
+        "predicted_class": "pituitary",
+        "count": "3"
+      },
+      {
+        "true_class": "glioma",
+        "predicted_class": "meningioma",
+        "count": "1"
+      },
+      {
+        "true_class": "meningioma",
+        "predicted_class": "glioma",
+        "count": "1"
+      }
+    ],
+    "glioma_to_meningioma": 1,
+    "meningioma_to_glioma": 1
+  },
+  "resnet18_reference_metrics": {
+    "sample_count": 702,
+    "overall_metrics": {
+      "accuracy": 0.9814814814814815,
+      "balanced_accuracy": 0.9800888286660644,
+      "precision_macro": 0.9810449547998874,
+      "recall_macro": 0.9800888286660644,
+      "f1_macro": 0.9805153483136225,
+      "precision_weighted": 0.9813905116575762,
+      "recall_weighted": 0.9814814814814815,
+      "f1_weighted": 0.9813845744303689,
+      "roc_auc_macro_ovr": 0.9996056252643724
+    },
+    "total_errors": 13,
+    "glioma_to_meningioma": 5,
+    "meningioma_to_glioma": 3
+  },
+  "parameter_comparison": {
+    "resnet18_parameters": 11178564,
+    "densenet121_parameters": 6957956,
+    "resnet18_estimated_model_size_mb": 42.64,
+    "densenet121_estimated_model_size_mb": 26.54,
+    "resnet18_checkpoint_size_mb": 128.04,
+    "densenet121_checkpoint_size_mb": 80.42
+  },
+  "latency_comparison": {
+    "resnet18_comparison_per_image_latency_ms": 1.7990629999803787,
+    "densenet121_comparison_per_image_latency_ms": 7.145314875003805,
+    "densenet121_formal_test_per_image_latency_ms": 6.933965249982066,
+    "resnet18_phase1e_per_image_latency_ms": 7.3789092499995945,
+    "methodology_note": "Phase 2C comparison latencies are benchmark-only apples-to-apples numbers; the older Phase 1E baseline latency used the formal evaluation pipeline and is not directly identical."
+  },
+  "throughput_comparison": {
+    "resnet18_comparison_throughput_images_per_second": 555.8449037142703,
+    "densenet121_comparison_throughput_images_per_second": 139.95184831269938,
+    "densenet121_formal_test_throughput_images_per_second": 144.2176249733277
+  },
+  "stability_information": {
+    "densenet121_run_count": 2,
+    "densenet121_mean_validation_macro_f1": 0.9930403736576712,
+    "densenet121_validation_macro_f1_std": 0.0019511936822778561,
+    "densenet121_best_run_experiment_name": "densenet121_seed42",
+    "densenet121_worst_run_experiment_name": "densenet121_seed1337"
+  },
+  "benchmark_metadata_audit": {
+    "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+    "git_commit": "11932fc8af053766e4cc86b632bd6fffedb73798",
+    "audit_timestamp_utc": "2026-08-15T19:32:43.719604+00:00",
+    "duration_accounting_policy": {
+      "complete": "duration is cumulative across all recorded training segments",
+      "incomplete": "only the latest resumed segment duration is known; cumulative total is unavailable",
+      "unknown": "no trustworthy duration information exists in the available payload"
+    },
+    "runs": [
+      {
+        "experiment_name": "convnext_tiny_seed42",
+        "architecture": "convnext_tiny",
+        "seed": 42,
+        "epochs_completed": 20,
+        "resumed_from_epoch": 20,
+        "status": "incomplete",
+        "reported_training_duration_seconds": 1.8184558000011748,
+        "corrected_training_duration_seconds": null,
+        "note": "Only the latest resumed training segment duration is available in summary metadata; the cumulative total cannot be reconstructed reliably from the existing artifacts."
+      },
+      {
+        "experiment_name": "densenet121_seed1337",
+        "architecture": "densenet121",
+        "seed": 1337,
+        "epochs_completed": 15,
+        "resumed_from_epoch": null,
+        "status": "complete",
+        "reported_training_duration_seconds": 2336.0263471,
+        "corrected_training_duration_seconds": 2336.0263471,
+        "note": "Single uninterrupted training segment recorded in the summary payload."
+      },
+      {
+        "experiment_name": "densenet121_seed42",
+        "architecture": "densenet121",
+        "seed": 42,
+        "epochs_completed": 18,
+        "resumed_from_epoch": null,
+        "status": "complete",
+        "reported_training_duration_seconds": 4504.287591,
+        "corrected_training_duration_seconds": 4504.287591,
+        "note": "Single uninterrupted training segment recorded in the summary payload."
+      },
+      {
+        "experiment_name": "efficientnet_v2_s_seed42",
+        "architecture": "efficientnet_v2_s",
+        "seed": 42,
+        "epochs_completed": 11,
+        "resumed_from_epoch": null,
+        "status": "complete",
+        "reported_training_duration_seconds": 8575.3759857,
+        "corrected_training_duration_seconds": 8575.3759857,
+        "note": "Single uninterrupted training segment recorded in the summary payload."
+      },
+      {
+        "experiment_name": "resnet18_seed42",
+        "architecture": "resnet18",
+        "seed": 42,
+        "epochs_completed": 14,
+        "resumed_from_epoch": null,
+        "status": "complete",
+        "reported_training_duration_seconds": 2494.587456200001,
+        "corrected_training_duration_seconds": 2494.587456200001,
+        "note": "Single uninterrupted training segment recorded in the summary payload."
+      }
+    ],
+    "incomplete_runs": [
+      "convnext_tiny_seed42"
+    ]
+  },
+  "final_backbone": "densenet121",
+  "rationale": "DenseNet121 remains the final BrainScanAI backbone because it improved held-out predictive performance, reduced total errors, stayed stable across two validation seeds, and still uses fewer parameters than ResNet18. Its slower inference is acceptable for MRI analysis workloads that are not real-time critical.",
+  "downstream_migration_required": true,
+  "decision_timestamp_utc": "2026-08-15T19:36:04.613311+00:00",
+  "git_commit": "11932fc8af053766e4cc86b632bd6fffedb73798",
+  "absolute_macro_f1_difference": 0.0119826119073424,
+  "error_count_difference": 8,
+  "paired_disagreement": {
+    "both_correct": 685,
+    "both_wrong": 1,
+    "reference_correct_challenger_wrong": 4,
+    "challenger_correct_reference_wrong": 12
+  },
+  "mcnemar_exact": {
+    "discordant_pairs": 16,
+    "two_sided_p_value": 0.076812744140625,
+    "method": "exact binomial"
+  },
+  "vram_comparison": {
+    "resnet18_peak_training_vram_mb": 382.12,
+    "densenet121_peak_training_vram_mb": 1115.13,
+    "resnet18_peak_benchmark_vram_mb": 481.78,
+    "densenet121_peak_benchmark_vram_mb": 313.37,
+    "densenet121_formal_test_peak_benchmark_vram_mb": 116.81
+  },
+  "engineering_context": {
+    "existing_resnet18_stack": [
+      "gradcam",
+      "calibration_analysis",
+      "uncertainty_thresholds",
+      "ood_reference",
+      "safe_inference_pipeline",
+      "robustness_evaluation"
+    ],
+    "migration_note": "DenseNet121 predictive evidence was evaluated independently. Existing ResNet18 explainability, uncertainty, OOD, and robustness artifacts do not automatically transfer to DenseNet121."
+  },
+  "next_required_migrations": [
+    "gradcam target-layer resolver update",
+    "temperature-scaling and uncertainty verification for DenseNet121",
+    "OOD reference rebuild in DenseNet121 feature space",
+    "safe inference integration",
+    "robustness revalidation"
+  ],
+  "glioma_meningioma_confusion_delta": {
+    "glioma_to_meningioma_baseline": 5,
+    "glioma_to_meningioma_densenet121": 1,
+    "meningioma_to_glioma_baseline": 3,
+    "meningioma_to_glioma_densenet121": 1
+  }
+}

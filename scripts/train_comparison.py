@@ -226,7 +226,11 @@ def main() -> None:
         "best_validation_macro_f1": results["best_score"],
         "epochs_completed": results["epochs_completed"],
         "resumed_from_epoch": results.get("resumed_from_epoch"),
-        "training_duration_seconds": train_seconds,
+        "training_duration_seconds": float(results.get("cumulative_training_duration_seconds", train_seconds)),
+        "segment_training_duration_seconds": float(results.get("segment_training_duration_seconds", train_seconds)),
+        "cumulative_training_duration_seconds": float(
+            results.get("cumulative_training_duration_seconds", train_seconds)
+        ),
         "best_checkpoint_path": paths["best_checkpoint"].as_posix(),
         "last_checkpoint_path": paths["last_checkpoint"].as_posix(),
         "history_json_path": paths["history_json"].as_posix(),
@@ -252,7 +256,7 @@ def main() -> None:
         "device_info": device_info,
         "benchmark": benchmark,
         "best_checkpoint_size_mb": best_checkpoint_mb,
-        "training_duration_seconds": train_seconds,
+        "training_duration_seconds": float(results.get("cumulative_training_duration_seconds", train_seconds)),
         "peak_vram_mb": peak_vram_mb,
         "peak_benchmark_vram_mb": peak_benchmark_vram_mb,
         "generated_timestamp_utc": datetime.now(UTC).isoformat(),
@@ -267,7 +271,10 @@ def main() -> None:
     print(f"  best_val_macro_f1={results['best_score']}")
     print(f"  epochs_completed={results['epochs_completed']}")
     print(f"  resumed_from_epoch={results.get('resumed_from_epoch')}")
-    print(f"  training_duration_seconds={train_seconds:.2f}")
+    print(
+        "  training_duration_seconds="
+        f"{float(results.get('cumulative_training_duration_seconds', train_seconds)):.2f}"
+    )
     print(f"  best_checkpoint={resolve_project_path(paths['best_checkpoint'])}")
     print(f"  best_checkpoint_size_mb={best_checkpoint_mb}")
     print(f"  peak_vram_mb={peak_vram_mb}")

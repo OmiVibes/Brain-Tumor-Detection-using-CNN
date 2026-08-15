@@ -28,7 +28,7 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 2B - robust safe inference and abstention analysis for the frozen ResNet18 baseline**
+Current milestone: **Phase 2C - frozen architecture comparison and final backbone decision**
 
 What is implemented through Phase 1E:
 
@@ -75,13 +75,21 @@ What is implemented in Phase 2B:
 - frozen-policy robustness evaluation in `scripts/evaluate_robustness.py`
 - held-out abstention/error-capture analysis and risk-coverage artifacts
 
+What is implemented in Phase 2C:
+
+- validation-only architecture benchmarking across ResNet18, DenseNet121, EfficientNetV2-S, and ConvNeXt-Tiny
+- frozen challenger selection before any challenger test evaluation
+- benchmark metadata sanity audit for training-duration accounting
+- one formal held-out DenseNet121 finalist evaluation on the same 702-image test split
+- paired ResNet18 vs DenseNet121 disagreement analysis with exact McNemar test
+- final backbone decision artifact and comparison documentation
+
 What is intentionally **not** implemented yet:
 
-- model comparison experiments
 - FastAPI
 - React frontend
 - segmentation
-- uncertainty estimation
+- DenseNet121 migration of Grad-CAM, calibration, OOD, safe inference, and robustness artifacts
 
 ## Current Supported Functionality
 
@@ -111,6 +119,8 @@ What is intentionally **not** implemented yet:
 - calibration study script in `scripts/calibrate.py`
 - safe inference pipeline in `src/brainscan/inference/pipeline.py`
 - robustness evaluation script in `scripts/evaluate_robustness.py`
+- architecture comparison training script in `scripts/train_comparison.py`
+- frozen finalist evaluation script in `scripts/evaluate_finalist.py`
 
 ## Current Limitations
 
@@ -549,6 +559,43 @@ Artifacts and write-up:
 - `artifacts/robustness/resnet18_baseline/risk_coverage_curve.png`
 - [docs/resnet18_robustness.md](docs/resnet18_robustness.md)
 
+## Architecture Comparison
+
+Phase 2C compared candidate backbones on validation only, froze the challenger selection, and then formally tested only the frozen DenseNet121 finalist on the held-out test split.
+
+Important rule:
+
+- the test set was not used to rank architectures
+
+### Validation and formal test snapshot
+
+| Model | Val Macro F1 | Params | Comparison Latency | Test Macro F1* |
+| --- | ---: | ---: | ---: | ---: |
+| ResNet18 | 0.9858 | 11.18M | 1.80 ms/image | 0.9805 |
+| DenseNet121 | 0.9930 mean / 0.9944 best | 6.96M | 7.15 ms/image | 0.9925 |
+| ConvNeXt-Tiny | 0.9927 | 27.82M | 9.24 ms/image | not formally tested |
+| EfficientNetV2-S | 0.9856 | 20.18M | 9.97 ms/image | not formally tested |
+
+`*` Formal held-out test metrics exist only for the Phase 1E ResNet18 baseline and the frozen Phase 2C DenseNet121 finalist.
+
+### Final backbone
+
+Final backbone: `densenet121`
+
+Why:
+
+- stronger held-out accuracy and macro F1 on the same 702-image test set
+- fewer total errors: `5` vs `13`
+- clear reduction in the main `glioma <-> meningioma` confusion pattern
+- fewer parameters and smaller pure model weights than ResNet18
+
+Trade-off:
+
+- DenseNet121 is about `4x` slower on the apples-to-apples comparison benchmark
+- downstream migration is still required for Grad-CAM, calibration, OOD, safe inference, and robustness artifacts
+
+Full comparison details are documented in [docs/model_comparison.md](docs/model_comparison.md).
+
 ## Training
 
 Run the full baseline:
@@ -599,6 +646,18 @@ Run the formal robustness and abstention study:
 .venv\Scripts\python.exe scripts\evaluate_robustness.py
 ```
 
+Run architecture-comparison training:
+
+```powershell
+.venv\Scripts\python.exe scripts\train_comparison.py --architecture densenet121 --seed 42 --batch-size 8 --disable-amp
+```
+
+Run the frozen finalist evaluation:
+
+```powershell
+.venv\Scripts\python.exe scripts\evaluate_finalist.py
+```
+
 ## Inspecting Real DataLoaders
 
 To inspect the real manifest-backed MRI dataloaders:
@@ -631,6 +690,7 @@ Current verification commands:
 .venv\Scripts\python.exe scripts\calibrate.py
 .venv\Scripts\python.exe scripts\predict.py --image dataset/test/glioma/Te-glTr_0001.jpg
 .venv\Scripts\python.exe scripts\evaluate_robustness.py
+.venv\Scripts\python.exe scripts\evaluate_finalist.py
 ```
 
 ## Roadmap

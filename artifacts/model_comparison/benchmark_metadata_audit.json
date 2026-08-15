@@ -1,0 +1,70 @@
+{
+  "dataset_fingerprint": "b15363ff85ecf29d11c67a2c38fad723a7bb339cb4489e53dd637ab16f8c24b1",
+  "git_commit": "11932fc8af053766e4cc86b632bd6fffedb73798",
+  "audit_timestamp_utc": "2026-08-15T19:32:43.719604+00:00",
+  "duration_accounting_policy": {
+    "complete": "duration is cumulative across all recorded training segments",
+    "incomplete": "only the latest resumed segment duration is known; cumulative total is unavailable",
+    "unknown": "no trustworthy duration information exists in the available payload"
+  },
+  "runs": [
+    {
+      "experiment_name": "convnext_tiny_seed42",
+      "architecture": "convnext_tiny",
+      "seed": 42,
+      "epochs_completed": 20,
+      "resumed_from_epoch": 20,
+      "status": "incomplete",
+      "reported_training_duration_seconds": 1.8184558000011748,
+      "corrected_training_duration_seconds": null,
+      "note": "Only the latest resumed training segment duration is available in summary metadata; the cumulative total cannot be reconstructed reliably from the existing artifacts."
+    },
+    {
+      "experiment_name": "densenet121_seed1337",
+      "architecture": "densenet121",
+      "seed": 1337,
+      "epochs_completed": 15,
+      "resumed_from_epoch": null,
+      "status": "complete",
+      "reported_training_duration_seconds": 2336.0263471,
+      "corrected_training_duration_seconds": 2336.0263471,
+      "note": "Single uninterrupted training segment recorded in the summary payload."
+    },
+    {
+      "experiment_name": "densenet121_seed42",
+      "architecture": "densenet121",
+      "seed": 42,
+      "epochs_completed": 18,
+      "resumed_from_epoch": null,
+      "status": "complete",
+      "reported_training_duration_seconds": 4504.287591,
+      "corrected_training_duration_seconds": 4504.287591,
+      "note": "Single uninterrupted training segment recorded in the summary payload."
+    },
+    {
+      "experiment_name": "efficientnet_v2_s_seed42",
+      "architecture": "efficientnet_v2_s",
+      "seed": 42,
+      "epochs_completed": 11,
+      "resumed_from_epoch": null,
+      "status": "complete",
+      "reported_training_duration_seconds": 8575.3759857,
+      "corrected_training_duration_seconds": 8575.3759857,
+      "note": "Single uninterrupted training segment recorded in the summary payload."
+    },
+    {
+      "experiment_name": "resnet18_seed42",
+      "architecture": "resnet18",
+      "seed": 42,
+      "epochs_completed": 14,
+      "resumed_from_epoch": null,
+      "status": "complete",
+      "reported_training_duration_seconds": 2494.587456200001,
+      "corrected_training_duration_seconds": 2494.587456200001,
+      "note": "Single uninterrupted training segment recorded in the summary payload."
+    }
+  ],
+  "incomplete_runs": [
+    "convnext_tiny_seed42"
+  ]
+}

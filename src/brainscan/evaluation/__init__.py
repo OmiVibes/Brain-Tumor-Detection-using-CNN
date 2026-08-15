@@ -16,22 +16,36 @@ from .classification import (
     plot_roc_curves,
     summarize_filtered_subset,
     verify_checkpoint_metadata,
+    write_evaluation_artifacts,
+)
+from .finalist import (
+    build_final_architecture_decision_payload,
+    compute_mcnemar_exact,
+    compute_paired_disagreement,
+    count_confusion_pair,
+    load_prediction_rows,
 )
 
 __all__ = [
     "annotate_predictions_with_near_duplicates",
     "benchmark_model_inference",
     "build_confusion_pairs",
+    "build_final_architecture_decision_payload",
     "build_predictions_rows",
+    "compute_mcnemar_exact",
+    "compute_paired_disagreement",
     "compute_classification_metrics_bundle",
     "compute_confidence_statistics",
+    "count_confusion_pair",
     "create_error_rows",
     "evaluate_classifier",
     "export_predictions_csv",
+    "load_prediction_rows",
     "load_near_duplicate_annotations",
     "plot_confusion_matrix_figure",
     "plot_pr_curves",
     "plot_roc_curves",
     "summarize_filtered_subset",
     "verify_checkpoint_metadata",
+    "write_evaluation_artifacts",
 ]
