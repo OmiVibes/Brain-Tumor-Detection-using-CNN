@@ -10,6 +10,24 @@ from brainscan.segmentation.data.audit import (
     resolve_brats_subject_root,
     summarize_segmentation_audit,
 )
+from brainscan.segmentation.data.dataset import (
+    BraTSSliceDataset,
+    SubjectVolumeLRUCache,
+    select_training_slice_records,
+)
+from brainscan.segmentation.data.preprocessing import (
+    SegmentationAugmentationConfig,
+    SegmentationAugmenter,
+    build_binary_mask,
+    stack_modalities,
+    zscore_normalize_nonzero,
+)
+from brainscan.segmentation.data.slice_index import (
+    SliceIndexRecord,
+    count_split_subjects,
+    load_slice_index_records,
+    write_slice_index_csv,
+)
 from brainscan.segmentation.data.splits import (
     SegmentationManifestRow,
     choose_subject_split_strategy,
@@ -20,16 +38,28 @@ from brainscan.segmentation.data.splits import (
 
 __all__ = [
     "BraTSSegmentationSubject",
+    "BraTSSliceDataset",
     "SegmentationManifestRow",
+    "SegmentationAugmentationConfig",
+    "SegmentationAugmenter",
+    "SliceIndexRecord",
+    "SubjectVolumeLRUCache",
     "audit_brats_subjects",
+    "build_binary_mask",
     "build_sample_overlay_grid",
     "build_segmentation_dataset_fingerprint",
     "choose_subject_split_strategy",
+    "count_split_subjects",
     "create_subject_level_manifests",
     "discover_brats_subjects",
     "load_nifti_volume",
+    "load_slice_index_records",
     "manifests_have_disjoint_subjects",
     "resolve_brats_subject_root",
+    "select_training_slice_records",
+    "stack_modalities",
     "summarize_segmentation_audit",
+    "write_slice_index_csv",
     "write_segmentation_manifest_csv",
+    "zscore_normalize_nonzero",
 ]
