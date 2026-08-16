@@ -7,6 +7,7 @@ from brainscan.segmentation.data.audit import (
     build_segmentation_dataset_fingerprint,
     discover_brats_subjects,
     load_nifti_volume,
+    resolve_brats_subject_root,
     summarize_segmentation_audit,
 )
 from brainscan.segmentation.data.splits import (
@@ -28,6 +29,7 @@ __all__ = [
     "discover_brats_subjects",
     "load_nifti_volume",
     "manifests_have_disjoint_subjects",
+    "resolve_brats_subject_root",
     "summarize_segmentation_audit",
     "write_segmentation_manifest_csv",
 ]

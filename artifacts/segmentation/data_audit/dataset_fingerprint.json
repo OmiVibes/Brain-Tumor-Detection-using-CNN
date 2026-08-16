@@ -1,0 +1,13 @@
+{
+  "dataset_fingerprint": "5bc6c1fe8868265cc8df6042ba353891aff6707f9b1acb65c4816c03920314db",
+  "dataset_name": "brats_adult_glioma",
+  "dataset_version": "2023",
+  "fingerprint_algorithm": "sha256(subject_ids|relative_paths|file_hashes|label_values|dataset_version)",
+  "label_mapping": {
+    "background": 0,
+    "edema": 2,
+    "enhancing_tumor": 3,
+    "ncr_net": 1
+  },
+  "subject_count": 1251
+}

@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
+import csv
 import json
 
 import nibabel as nib
@@ -61,6 +62,42 @@ def _normalize_subject_id(subject_dir: Path) -> str:
     return subject_id
 
 
+def _looks_like_brats_subject_dir(path: Path, modalities: list[str], mask_name: str) -> bool:
+    if not path.is_dir():
+        return False
+    subject_id = path.name.strip()
+    if not subject_id:
+        return False
+    file_map = _subject_file_map(path)
+    expected_suffixes = [f"{subject_id}-{modality}" for modality in modalities]
+    expected_suffixes.append(f"{subject_id}-{mask_name}")
+    return any(suffix in file_map for suffix in expected_suffixes)
+
+
+def resolve_brats_subject_root(dataset_root: str | Path, modalities: list[str], mask_name: str) -> Path:
+    """Resolve the directory that directly contains BraTS subject folders."""
+    resolved_root = resolve_project_path(dataset_root)
+    if not resolved_root.exists():
+        raise FileNotFoundError(f"Segmentation dataset root not found: {resolved_root}")
+    if not resolved_root.is_dir():
+        raise NotADirectoryError(f"Segmentation dataset root is not a directory: {resolved_root}")
+
+    direct_children = sorted(path for path in resolved_root.iterdir() if path.is_dir())
+    if any(_looks_like_brats_subject_dir(path, modalities, mask_name) for path in direct_children):
+        return resolved_root
+
+    if len(direct_children) == 1:
+        nested_root = direct_children[0]
+        nested_children = sorted(path for path in nested_root.iterdir() if path.is_dir())
+        if any(_looks_like_brats_subject_dir(path, modalities, mask_name) for path in nested_children):
+            return nested_root
+
+    raise ValueError(
+        "Could not find BraTS subject directories under the configured segmentation dataset root: "
+        f"{resolved_root}"
+    )
+
+
 def _subject_file_map(subject_dir: Path) -> dict[str, Path]:
     file_map: dict[str, Path] = {}
     for file_path in sorted(subject_dir.iterdir()):
@@ -79,11 +116,7 @@ def discover_brats_subjects(
     source_version: str,
 ) -> list[BraTSSegmentationSubject]:
     """Discover BraTS-style subject folders without mutating any source data."""
-    resolved_root = resolve_project_path(dataset_root)
-    if not resolved_root.exists():
-        raise FileNotFoundError(f"Segmentation dataset root not found: {resolved_root}")
-    if not resolved_root.is_dir():
-        raise NotADirectoryError(f"Segmentation dataset root is not a directory: {resolved_root}")
+    resolved_root = resolve_brats_subject_root(dataset_root, modalities, mask_name)
 
     subjects: list[BraTSSegmentationSubject] = []
     for subject_dir in sorted(path for path in resolved_root.iterdir() if path.is_dir()):
@@ -143,133 +176,178 @@ def _subject_hash_inputs(subject: BraTSSegmentationSubject) -> list[str]:
     return values
 
 
+def _load_audit_checkpoint_rows(checkpoint_path: str | Path) -> dict[str, dict[str, object]]:
+    resolved_path = resolve_project_path(checkpoint_path)
+    if not resolved_path.exists():
+        return {}
+
+    cached_rows: dict[str, dict[str, object]] = {}
+    with resolved_path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            payload = line.strip()
+            if not payload:
+                continue
+            row = json.loads(payload)
+            cached_rows[str(row["subject_id"])] = row
+    return cached_rows
+
+
+def _append_audit_checkpoint_row(checkpoint_path: str | Path, row: dict[str, object]) -> None:
+    resolved_path = resolve_project_path(checkpoint_path)
+    resolved_path.parent.mkdir(parents=True, exist_ok=True)
+    with resolved_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True))
+        handle.write("\n")
+
+
+def _audit_single_subject(
+    subject: BraTSSegmentationSubject,
+    modalities: list[str],
+    *,
+    binary_mode: str,
+) -> dict[str, object]:
+    modality_shapes: dict[str, list[int] | None] = {}
+    modality_spacings: dict[str, list[float] | None] = {}
+    modality_orientations: dict[str, str | None] = {}
+    unreadable_modalities: list[str] = []
+    subject_arrays: dict[str, np.ndarray] = {}
+    subject_images: dict[str, nib.Nifti1Image] = {}
+
+    for modality in modalities:
+        modality_path = subject.modality_paths.get(modality, "")
+        if not modality_path:
+            modality_shapes[modality] = None
+            modality_spacings[modality] = None
+            modality_orientations[modality] = None
+            continue
+        try:
+            array, image = load_nifti_volume(modality_path)
+        except Exception:
+            modality_shapes[modality] = None
+            modality_spacings[modality] = None
+            modality_orientations[modality] = None
+            unreadable_modalities.append(modality)
+            continue
+
+        subject_arrays[modality] = array
+        subject_images[modality] = image
+        modality_shapes[modality] = _shape_tuple(array.shape)
+        modality_spacings[modality] = _float_list(image.header.get_zooms()[: array.ndim])
+        modality_orientations[modality] = "".join(aff2axcodes(image.affine))
+
+    mask_readable = False
+    mask_shape: list[int] | None = None
+    mask_spacing: list[float] | None = None
+    mask_orientation: str | None = None
+    mask_label_values: list[int] = []
+    tumor_voxel_count = 0
+    tumor_fraction = 0.0
+    num_positive_slices = 0
+    total_slices = 0
+    empty_mask = True
+    unreadable_mask = False
+    shape_mismatch = False
+    spacing_mismatch = False
+    orientation_mismatch = False
+
+    if subject.mask_path:
+        try:
+            mask_array, mask_image = load_nifti_volume(subject.mask_path)
+            mask_readable = True
+            mask_shape = _shape_tuple(mask_array.shape)
+            mask_spacing = _float_list(mask_image.header.get_zooms()[: mask_array.ndim])
+            mask_orientation = "".join(aff2axcodes(mask_image.affine))
+            mask_label_values = _mask_label_values(mask_array)
+            binary_mask = mask_array > 0
+            tumor_voxel_count = int(binary_mask.sum())
+            empty_mask = tumor_voxel_count == 0
+            tumor_fraction = float(tumor_voxel_count / binary_mask.size) if binary_mask.size else 0.0
+            if mask_array.ndim >= 3:
+                total_slices = int(mask_array.shape[2])
+                num_positive_slices = int(np.count_nonzero(binary_mask.reshape(-1, mask_array.shape[2]).any(axis=0)))
+            else:
+                total_slices = 1
+                num_positive_slices = int(bool(tumor_voxel_count))
+
+            reference_modality = next((mod for mod in modalities if mod in subject_arrays), None)
+            if reference_modality is not None:
+                reference_array = subject_arrays[reference_modality]
+                reference_image = subject_images[reference_modality]
+                shape_mismatch = tuple(reference_array.shape) != tuple(mask_array.shape)
+                spacing_mismatch = tuple(reference_image.header.get_zooms()[: mask_array.ndim]) != tuple(
+                    mask_image.header.get_zooms()[: mask_array.ndim]
+                )
+                orientation_mismatch = "".join(aff2axcodes(reference_image.affine)) != "".join(
+                    aff2axcodes(mask_image.affine)
+                )
+        except Exception:
+            unreadable_mask = True
+
+    return {
+        "subject_id": subject.subject_id,
+        "source_dataset": subject.source_dataset,
+        "source_version": subject.source_version,
+        "mask_path": subject.mask_path,
+        "modality_paths": dict(subject.modality_paths),
+        "modality_count_present": sum(1 for modality in modalities if subject.modality_paths.get(modality)),
+        "missing_modalities": [modality for modality in modalities if not subject.modality_paths.get(modality)],
+        "unreadable_modalities": unreadable_modalities,
+        "mask_present": bool(subject.mask_path),
+        "mask_readable": mask_readable,
+        "unreadable_mask": unreadable_mask,
+        "modality_shapes": modality_shapes,
+        "modality_spacings": modality_spacings,
+        "modality_orientations": modality_orientations,
+        "modality_file_hashes": {
+            modality: compute_file_sha256(subject.modality_paths[modality])
+            for modality in modalities
+            if subject.modality_paths.get(modality)
+        },
+        "mask_shape": mask_shape,
+        "mask_spacing": mask_spacing,
+        "mask_orientation": mask_orientation,
+        "mask_file_hash": compute_file_sha256(subject.mask_path) if subject.mask_path else "",
+        "shape_mismatch": shape_mismatch,
+        "spacing_mismatch": spacing_mismatch,
+        "orientation_mismatch": orientation_mismatch,
+        "mask_label_values": mask_label_values,
+        "empty_mask": empty_mask,
+        "tumor_voxel_count": tumor_voxel_count,
+        "tumor_fraction": tumor_fraction,
+        "total_slices": total_slices,
+        "positive_slices": num_positive_slices,
+        "binary_segmentation_mode": binary_mode,
+        "subject_hash_basis": _subject_hash_inputs(subject),
+    }
+
+
 def audit_brats_subjects(
     subjects: list[BraTSSegmentationSubject],
     modalities: list[str],
     *,
     binary_mode: str = "binary_whole_tumor",
+    checkpoint_path: str | Path | None = None,
+    progress_interval: int = 25,
 ) -> list[dict[str, object]]:
     """Audit BraTS-style subjects without modifying source volumes."""
     if binary_mode != "binary_whole_tumor":
         raise ValueError(f"Unsupported segmentation mode for Phase 3A audit: {binary_mode}")
 
+    cached_rows = _load_audit_checkpoint_rows(checkpoint_path) if checkpoint_path is not None else {}
     rows: list[dict[str, object]] = []
-    for subject in subjects:
-        modality_shapes: dict[str, list[int] | None] = {}
-        modality_spacings: dict[str, list[float] | None] = {}
-        modality_orientations: dict[str, str | None] = {}
-        unreadable_modalities: list[str] = []
-        subject_arrays: dict[str, np.ndarray] = {}
-        subject_images: dict[str, nib.Nifti1Image] = {}
-
-        for modality in modalities:
-            modality_path = subject.modality_paths.get(modality, "")
-            if not modality_path:
-                modality_shapes[modality] = None
-                modality_spacings[modality] = None
-                modality_orientations[modality] = None
-                continue
-            try:
-                array, image = load_nifti_volume(modality_path)
-            except Exception:
-                modality_shapes[modality] = None
-                modality_spacings[modality] = None
-                modality_orientations[modality] = None
-                unreadable_modalities.append(modality)
-                continue
-
-            subject_arrays[modality] = array
-            subject_images[modality] = image
-            modality_shapes[modality] = _shape_tuple(array.shape)
-            modality_spacings[modality] = _float_list(image.header.get_zooms()[: array.ndim])
-            modality_orientations[modality] = "".join(aff2axcodes(image.affine))
-
-        mask_readable = False
-        mask_shape: list[int] | None = None
-        mask_spacing: list[float] | None = None
-        mask_orientation: str | None = None
-        mask_label_values: list[int] = []
-        tumor_voxel_count = 0
-        tumor_fraction = 0.0
-        num_positive_slices = 0
-        total_slices = 0
-        empty_mask = True
-        unreadable_mask = False
-        shape_mismatch = False
-        spacing_mismatch = False
-        orientation_mismatch = False
-
-        if subject.mask_path:
-            try:
-                mask_array, mask_image = load_nifti_volume(subject.mask_path)
-                mask_readable = True
-                mask_shape = _shape_tuple(mask_array.shape)
-                mask_spacing = _float_list(mask_image.header.get_zooms()[: mask_array.ndim])
-                mask_orientation = "".join(aff2axcodes(mask_image.affine))
-                mask_label_values = _mask_label_values(mask_array)
-                binary_mask = mask_array > 0
-                tumor_voxel_count = int(binary_mask.sum())
-                empty_mask = tumor_voxel_count == 0
-                tumor_fraction = float(tumor_voxel_count / binary_mask.size) if binary_mask.size else 0.0
-                if mask_array.ndim >= 3:
-                    total_slices = int(mask_array.shape[2])
-                    num_positive_slices = int(np.count_nonzero(binary_mask.reshape(-1, mask_array.shape[2]).any(axis=0)))
-                else:
-                    total_slices = 1
-                    num_positive_slices = int(bool(tumor_voxel_count))
-
-                reference_modality = next((mod for mod in modalities if mod in subject_arrays), None)
-                if reference_modality is not None:
-                    reference_array = subject_arrays[reference_modality]
-                    reference_image = subject_images[reference_modality]
-                    shape_mismatch = tuple(reference_array.shape) != tuple(mask_array.shape)
-                    spacing_mismatch = tuple(reference_image.header.get_zooms()[: mask_array.ndim]) != tuple(
-                        mask_image.header.get_zooms()[: mask_array.ndim]
-                    )
-                    orientation_mismatch = "".join(aff2axcodes(reference_image.affine)) != "".join(
-                        aff2axcodes(mask_image.affine)
-                    )
-            except Exception:
-                unreadable_mask = True
-
-        rows.append(
-            {
-                "subject_id": subject.subject_id,
-                "source_dataset": subject.source_dataset,
-                "source_version": subject.source_version,
-                "mask_path": subject.mask_path,
-                "modality_paths": dict(subject.modality_paths),
-                "modality_count_present": sum(1 for modality in modalities if subject.modality_paths.get(modality)),
-                "missing_modalities": [modality for modality in modalities if not subject.modality_paths.get(modality)],
-                "unreadable_modalities": unreadable_modalities,
-                "mask_present": bool(subject.mask_path),
-                "mask_readable": mask_readable,
-                "unreadable_mask": unreadable_mask,
-                "modality_shapes": modality_shapes,
-                "modality_spacings": modality_spacings,
-                "modality_orientations": modality_orientations,
-                "modality_file_hashes": {
-                    modality: compute_file_sha256(subject.modality_paths[modality])
-                    for modality in modalities
-                    if subject.modality_paths.get(modality)
-                },
-                "mask_shape": mask_shape,
-                "mask_spacing": mask_spacing,
-                "mask_orientation": mask_orientation,
-                "mask_file_hash": compute_file_sha256(subject.mask_path) if subject.mask_path else "",
-                "shape_mismatch": shape_mismatch,
-                "spacing_mismatch": spacing_mismatch,
-                "orientation_mismatch": orientation_mismatch,
-                "mask_label_values": mask_label_values,
-                "empty_mask": empty_mask,
-                "tumor_voxel_count": tumor_voxel_count,
-                "tumor_fraction": tumor_fraction,
-                "total_slices": total_slices,
-                "positive_slices": num_positive_slices,
-                "binary_segmentation_mode": binary_mode,
-                "subject_hash_basis": _subject_hash_inputs(subject),
-            }
-        )
+    total_subjects = len(subjects)
+    for index, subject in enumerate(subjects, start=1):
+        cached_row = cached_rows.get(subject.subject_id)
+        expected_hash_basis = _subject_hash_inputs(subject)
+        if cached_row is not None and cached_row.get("subject_hash_basis") == expected_hash_basis:
+            row = cached_row
+        else:
+            row = _audit_single_subject(subject, modalities, binary_mode=binary_mode)
+            if checkpoint_path is not None:
+                _append_audit_checkpoint_row(checkpoint_path, row)
+        rows.append(row)
+        if progress_interval > 0 and (index == total_subjects or index % progress_interval == 0):
+            print(f"[segmentation-audit] processed {index}/{total_subjects} subjects")
     return rows
 
 
@@ -488,8 +566,6 @@ def write_segmentation_json(output_path: str | Path, payload: dict[str, Any]) ->
 
 
 def write_mask_statistics_csv(output_path: str | Path, audited_rows: list[dict[str, object]]) -> Path:
-    import csv
-
     resolved_path = resolve_project_path(output_path)
     resolved_path.parent.mkdir(parents=True, exist_ok=True)
     rows = [

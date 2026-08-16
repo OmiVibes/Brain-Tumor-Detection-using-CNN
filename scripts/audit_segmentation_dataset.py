@@ -39,6 +39,7 @@ def main() -> int:
     mask_name = str(dataset_cfg["mask_name"])
     source_dataset = str(dataset_cfg["name"])
     source_version = str(dataset_cfg["version"])
+    checkpoint_path = "artifacts/segmentation/data_audit/tmp/audited_rows.jsonl"
 
     subjects = discover_brats_subjects(
         dataset_root,
@@ -47,7 +48,12 @@ def main() -> int:
         source_dataset=source_dataset,
         source_version=source_version,
     )
-    audited_rows = audit_brats_subjects(subjects, modalities, binary_mode=str(config["segmentation"]["mode"]))
+    audited_rows = audit_brats_subjects(
+        subjects,
+        modalities,
+        binary_mode=str(config["segmentation"]["mode"]),
+        checkpoint_path=checkpoint_path,
+    )
     manifests = create_subject_level_manifests(audited_rows, modalities=modalities, seed=seed)
 
     split_dir = resolve_project_path(dataset_cfg["split_manifest_dir"])

@@ -1,0 +1,58 @@
+{
+  "dataset_name": "brats_adult_glioma",
+  "dataset_version": "2023",
+  "duplicate_file_hash_groups": 0,
+  "duplicate_subject_ids": 0,
+  "license_access_status": "manual Synapse access with accepted terms",
+  "manual_download_required": true,
+  "mask_label_values": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "mask_orientation_distribution": {
+    "LPS": 1251
+  },
+  "modalities": [
+    "t1c",
+    "t1n",
+    "t2f",
+    "t2w"
+  ],
+  "modality_coverage": {
+    "t1c": 1251,
+    "t1n": 1251,
+    "t2f": 1251,
+    "t2w": 1251
+  },
+  "orientation_mismatch_subjects": 0,
+  "shape_mismatch_subjects": 0,
+  "spacing_mismatch_subjects": 0,
+  "subject_count": 1251,
+  "subjects_with_corrupt_or_unreadable_volumes": 0,
+  "subjects_with_empty_masks": 0,
+  "subjects_with_missing_masks": 0,
+  "subjects_with_missing_modalities": 0,
+  "total_slices": 193905,
+  "tumor_fraction_summary": {
+    "max": 0.0405222894265233,
+    "mean": 0.0107490616825536,
+    "median": 0.010006160394265233,
+    "min": 0.00031451612903225806
+  },
+  "tumor_positive_slice_ratio": 0.4199840127897682,
+  "tumor_positive_slices": 81437,
+  "tumor_voxel_count_summary": {
+    "max": 361783.0,
+    "mean": 95967.62270183853,
+    "median": 89335.0,
+    "min": 2808.0
+  },
+  "volume_shape_distribution": {
+    "(240, 240, 155)": 1251
+  },
+  "voxel_spacing_distribution": {
+    "(1.0, 1.0, 1.0)": 1251
+  }
+}

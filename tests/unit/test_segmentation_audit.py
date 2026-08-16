@@ -13,6 +13,7 @@ from brainscan.segmentation.data.audit import (
     compute_file_sha256,
     discover_brats_subjects,
     load_nifti_volume,
+    resolve_brats_subject_root,
 )
 
 
@@ -194,5 +195,26 @@ def test_source_files_never_modified() -> None:
         _ = audit_brats_subjects(subjects, ["t1c", "t1n", "t2f", "t2w"])
         after = compute_file_sha256(target_file)
         assert before == after
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def test_nested_extracted_brats_parent_directory_is_resolved() -> None:
+    tmp_dir = _workspace_tmp_dir()
+    try:
+        dataset_root = tmp_dir / "data" / "segmentation" / "raw" / "brats2023_glioma"
+        extracted_root = dataset_root / "ASNR-MICCAI-BraTS2023-GLI-Challenge-TrainingData"
+        _build_subject(extracted_root, "BraTS-GLI-00007-000")
+        resolved_root = resolve_brats_subject_root(dataset_root, ["t1c", "t1n", "t2f", "t2w"], "seg")
+        subjects = discover_brats_subjects(
+            dataset_root,
+            ["t1c", "t1n", "t2f", "t2w"],
+            "seg",
+            source_dataset="brats_adult_glioma",
+            source_version="2023",
+        )
+        assert resolved_root == extracted_root.resolve()
+        assert len(subjects) == 1
+        assert subjects[0].subject_id == "BraTS-GLI-00007-000"
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
