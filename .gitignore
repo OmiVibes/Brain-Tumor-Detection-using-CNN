@@ -17,6 +17,9 @@ env/
 .env
 
 dataset/
+data/segmentation/raw/
+data/segmentation/derived/
+data/segmentation/tmp/
 models/*.h5
 
 static/uploads/
@@ -36,3 +39,4 @@ artifacts/explainability/**/heatmap/
 artifacts/explainability/**/overlay/
 artifacts/explainability/**/metadata/
 artifacts/robustness/**/ood_reference.npz
+artifacts/segmentation/data_audit/tmp/

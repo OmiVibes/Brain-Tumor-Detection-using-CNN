@@ -84,3 +84,8 @@ def load_train_config(config_path: str | Path = "configs/train.yaml") -> dict[st
 def load_inference_config(config_path: str | Path = "configs/inference.yaml") -> dict[str, Any]:
     """Load the Phase 1A inference configuration."""
     return load_config(config_path, required_sections=("dataset", "model", "inference"))
+
+
+def load_segmentation_config(config_path: str | Path = "configs/segmentation.yaml") -> dict[str, Any]:
+    """Load the Phase 3A segmentation-data configuration."""
+    return load_config(config_path, required_sections=("dataset", "segmentation", "reproducibility"))

@@ -1,0 +1,17 @@
+dataset:
+  name: brats_adult_glioma
+  root: data/segmentation/raw/brats2023_glioma
+  version: "2023"
+  modalities:
+    - t1c
+    - t1n
+    - t2f
+    - t2w
+  mask_name: seg
+  split_manifest_dir: data/segmentation/splits
+
+segmentation:
+  mode: binary_whole_tumor
+
+reproducibility:
+  seed: 42
