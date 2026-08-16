@@ -1,0 +1,21 @@
+{
+  "checkpoint": "artifacts/models/segmentation/unet2d_whole_tumor/best.pt",
+  "threshold": 0.5,
+  "subject_count": 188,
+  "mean_dice": 0.876161137303281,
+  "median_dice": 0.917591166708129,
+  "dice_std": 0.1081122043939062,
+  "mean_iou": 0.7933622793794609,
+  "mean_precision": 0.856860813650186,
+  "mean_recall": 0.9120344830452767,
+  "mean_specificity": 0.9988519307862386,
+  "dice_distribution": {
+    "min": 0.32631238597512285,
+    "q25": 0.8673601265539533,
+    "median": 0.917591166708129,
+    "q75": 0.9403784057123776,
+    "max": 0.976069775174627
+  },
+  "review_grid": "artifacts/segmentation/evaluation/unet2d_whole_tumor/review_grid.png",
+  "subject_metrics_csv": "artifacts/segmentation/evaluation/unet2d_whole_tumor/subject_metrics.csv"
+}

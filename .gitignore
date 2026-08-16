@@ -3,9 +3,11 @@ __pycache__/
 PROJECT_CONTEXT.txt
 
 .pytest_cache/
+.pytest_cache_local/
 .mypy_cache/
 .ruff_cache/
 .tmp/
+.pytest_tmp/
 
 .venv/
 venv/

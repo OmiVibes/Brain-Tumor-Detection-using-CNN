@@ -1,0 +1,42 @@
+{
+  "best_case": {
+    "subject_id": "BraTS-GLI-01537-000",
+    "dice": 0.976069775174627,
+    "iou": 0.9532580946530914,
+    "precision": 0.9710872928628156,
+    "recall": 0.9811036496951846,
+    "specificity": 0.9993495175712698,
+    "tumor_voxel_count": 194482,
+    "predicted_voxel_count": 196488,
+    "false_positive_voxel_count": 5681,
+    "false_negative_voxel_count": 3675
+  },
+  "median_case": {
+    "subject_id": "BraTS-GLI-01046-000",
+    "dice": 0.9179500004813442,
+    "iou": 0.8483434230307461,
+    "precision": 0.8486074553616649,
+    "recall": 0.9996333773280578,
+    "specificity": 0.9980724670858897,
+    "tumor_voxel_count": 95466,
+    "predicted_voxel_count": 112456,
+    "false_positive_voxel_count": 17025,
+    "false_negative_voxel_count": 35
+  },
+  "worst_case": {
+    "subject_id": "BraTS-GLI-01530-000",
+    "dice": 0.32631238597512285,
+    "iou": 0.1949661234569959,
+    "precision": 0.20324817309391727,
+    "recall": 0.8271279709737075,
+    "specificity": 0.9937843665489915,
+    "tumor_voxel_count": 17082,
+    "predicted_voxel_count": 69516,
+    "false_positive_voxel_count": 55387,
+    "false_negative_voxel_count": 2953
+  },
+  "notes": [
+    "Failure analysis is descriptive only and does not claim clinical causality.",
+    "False positives and false negatives are reported from subject-level whole-volume masks."
+  ]
+}

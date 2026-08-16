@@ -28,7 +28,7 @@ The preserved legacy system is documented in [docs/legacy_system.md](docs/legacy
 
 ## Current Upgrade Status
 
-Current milestone: **Phase 2D - DenseNet121 explainability, calibration, and safe-inference migration**
+Current milestone: **Phase 3B - first BraTS 2D U-Net whole-tumor segmentation baseline**
 
 What is implemented through Phase 1E:
 
@@ -94,11 +94,31 @@ What is implemented in Phase 2D:
 - DenseNet121 risk-coverage, perturbation, synthetic OOD, and safe-latency artifacts
 - default BrainScanAI safe-inference backbone switched to DenseNet121
 
+What is implemented in Phase 3A:
+
+- BraTS 2023 adult glioma segmentation dataset audit
+- deterministic subject-level split manifests for segmentation
+- audited modality completeness and raw mask label distribution
+- frozen segmentation dataset fingerprint and planning documentation
+
+What is implemented in Phase 3B:
+
+- direct NIfTI-based 4-channel BraTS slice dataset for segmentation
+- deterministic slice-index manifests derived from frozen subject splits
+- per-modality non-zero z-score normalization for MRI segmentation
+- bounded subject-cache loading for `.nii.gz` volumes
+- lightweight 2D U-Net whole-tumor segmentation model
+- BCE + Dice segmentation training loop with subject-level validation metrics
+- frozen validation-only model-selection artifact before test use
+- first formal held-out whole-volume segmentation evaluation on 188 test subjects
+- review-grid and failure-analysis artifacts for good/median/poor cases
+
 What is intentionally **not** implemented yet:
 
 - FastAPI
 - React frontend
-- segmentation
+- 3D segmentation
+- multi-region BraTS segmentation
 
 ## Current Supported Functionality
 
@@ -130,6 +150,10 @@ What is intentionally **not** implemented yet:
 - robustness evaluation script in `scripts/evaluate_robustness.py`
 - architecture comparison training script in `scripts/train_comparison.py`
 - frozen finalist evaluation script in `scripts/evaluate_finalist.py`
+- BraTS segmentation slice-index builder in `scripts/build_segmentation_slice_index.py`
+- BraTS segmentation trainer in `scripts/train_segmentation.py`
+- BraTS segmentation evaluator in `scripts/evaluate_segmentation.py`
+- reusable U-Net segmentation package in `src/brainscan/segmentation/`
 
 ## Current Limitations
 
@@ -642,6 +666,50 @@ DenseNet migration write-ups:
 - [docs/densenet121_calibration.md](docs/densenet121_calibration.md)
 - [docs/densenet121_robustness.md](docs/densenet121_robustness.md)
 
+## BraTS Whole-Tumor Segmentation Baseline
+
+Phase 3B adds the first BrainScanAI segmentation model. This is separate from the earlier classifier and uses BraTS 2023 adult glioma NIfTI volumes directly.
+
+Baseline definition:
+
+- model: `2D U-Net`
+- input: `4 x 240 x 240` axial slice tensor using `t1c + t1n + t2f + t2w`
+- target: binary whole-tumor mask derived at runtime with `seg > 0`
+- normalization: per-modality z-score over non-zero voxels
+- train sampling: all positive train slices plus a deterministic 1:1 negative subset
+
+Frozen validation-selected checkpoint:
+
+- `artifacts/models/segmentation/unet2d_whole_tumor/best.pt`
+- best epoch: `9`
+- best validation subject Dice: `0.8847`
+- best validation IoU: `0.8037`
+
+Formal held-out test results on `188` BraTS test subjects:
+
+- mean Dice: `0.8762`
+- median Dice: `0.9176`
+- Dice std: `0.1081`
+- mean IoU: `0.7934`
+- precision: `0.8569`
+- recall: `0.9120`
+- specificity: `0.9989`
+
+Segmentation artifacts and write-up:
+
+- `artifacts/segmentation/model_selection.json`
+- `artifacts/segmentation/training/unet2d_whole_tumor/history.json`
+- `artifacts/segmentation/evaluation/unet2d_whole_tumor/summary.json`
+- `artifacts/segmentation/evaluation/unet2d_whole_tumor/review_grid.png`
+- [docs/unet2d_segmentation.md](docs/unet2d_segmentation.md)
+
+Important distinction:
+
+- Grad-CAM is classifier attention
+- U-Net output is pixel-level segmentation
+
+These outputs should not be treated as the same kind of explanation.
+
 ## Training
 
 Run the full baseline:
@@ -716,6 +784,30 @@ Run the frozen finalist evaluation:
 .venv\Scripts\python.exe scripts\evaluate_finalist.py
 ```
 
+Build the segmentation slice-index manifests:
+
+```powershell
+.venv\Scripts\python.exe scripts\build_segmentation_slice_index.py --config configs/segmentation.yaml
+```
+
+Run the segmentation smoke test:
+
+```powershell
+.venv\Scripts\python.exe scripts\train_segmentation.py --config configs/segmentation.yaml --smoke-test
+```
+
+Run full segmentation training:
+
+```powershell
+.venv\Scripts\python.exe scripts\train_segmentation.py --config configs/segmentation.yaml
+```
+
+Run the frozen segmentation test evaluation:
+
+```powershell
+.venv\Scripts\python.exe scripts\evaluate_segmentation.py --config configs/segmentation.yaml --selection artifacts/segmentation/model_selection.json
+```
+
 ## Inspecting Real DataLoaders
 
 To inspect the real manifest-backed MRI dataloaders:
@@ -749,6 +841,9 @@ Current verification commands:
 .venv\Scripts\python.exe scripts\predict.py --image dataset/test/glioma/Te-glTr_0001.jpg
 .venv\Scripts\python.exe scripts\evaluate_robustness.py
 .venv\Scripts\python.exe scripts\evaluate_finalist.py
+.venv\Scripts\python.exe scripts\build_segmentation_slice_index.py --config configs/segmentation.yaml
+.venv\Scripts\python.exe scripts\train_segmentation.py --config configs/segmentation.yaml --smoke-test
+.venv\Scripts\python.exe scripts\evaluate_segmentation.py --config configs/segmentation.yaml --selection artifacts/segmentation/model_selection.json
 ```
 
 ## Roadmap

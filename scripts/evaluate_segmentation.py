@@ -18,7 +18,7 @@ if str(SRC_PATH) not in sys.path:
 
 from brainscan.core.config import load_segmentation_config, resolve_project_path
 from brainscan.segmentation.data.dataset import BraTSSliceDataset
-from brainscan.segmentation.data.slice_index import load_slice_index_records
+from brainscan.segmentation.data.slice_index import SliceIndexRecord, load_slice_index_records
 from brainscan.segmentation.models import UNet2D
 from brainscan.segmentation.training import (
     BCEDiceLoss,
@@ -48,6 +48,69 @@ def _normalized_t2f_slice(record: dict[str, str], dataset_root: Path) -> np.ndar
     if maximum <= minimum:
         return np.zeros_like(image_slice, dtype=np.float32)
     return np.clip((image_slice - minimum) / (maximum - minimum), 0.0, 1.0)
+
+
+def _project_relative(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT.resolve()).as_posix()
+    except ValueError:
+        return path.resolve().as_posix()
+
+
+@torch.no_grad()
+def _predict_subject_triplet(
+    *,
+    model: UNet2D,
+    subject_records: list[SliceIndexRecord],
+    modalities: list[str],
+    dataset_root: Path,
+    device: torch.device,
+    threshold: float,
+    batch_size: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    dataset = BraTSSliceDataset(
+        records=subject_records,
+        modalities=modalities,
+        return_metadata=True,
+        dataset_root=dataset_root,
+        max_subject_cache_size=1,
+    )
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=(device.type == "cuda"))
+
+    first_image, first_target, _ = dataset[0]
+    height, width = int(first_image.shape[1]), int(first_image.shape[2])
+    depth = max(int(record.slice_index) for record in subject_records) + 1
+    prediction_volume = np.zeros((height, width, depth), dtype=np.uint8)
+    target_volume = np.zeros((height, width, depth), dtype=np.uint8)
+
+    model.eval()
+    for inputs, targets, metadata in loader:
+        inputs = inputs.to(device, non_blocking=True)
+        logits = model(inputs)
+        probabilities = torch.sigmoid(logits)
+        predictions = (probabilities >= threshold).to(dtype=torch.uint8).cpu().numpy()
+        target_batch = targets.to(dtype=torch.uint8).cpu().numpy()
+        slice_indices = [int(value) for value in list(metadata["slice_index"])]
+        for batch_index, slice_index in enumerate(slice_indices):
+            prediction_volume[:, :, slice_index] = predictions[batch_index, 0]
+            target_volume[:, :, slice_index] = target_batch[batch_index, 0]
+
+    positive_counts = target_volume.reshape(-1, depth).sum(axis=0)
+    if int(positive_counts.max()) > 0:
+        representative_slice = int(np.argmax(positive_counts))
+    else:
+        representative_slice = depth // 2
+
+    image_row = {
+        "t2f_path": subject_records[representative_slice].modality_paths["t2f"],
+        "slice_index": representative_slice,
+    }
+    image_slice = _normalized_t2f_slice(image_row, dataset_root)
+    return (
+        image_slice,
+        target_volume[:, :, representative_slice].astype(np.float32),
+        prediction_volume[:, :, representative_slice].astype(np.float32),
+    )
 
 
 def main() -> int:
@@ -106,30 +169,39 @@ def main() -> int:
     median_case = sorted(subject_rows, key=lambda row: row.dice)[len(subject_rows) // 2]
     worst_case = min(subject_rows, key=lambda row: row.dice)
 
-    subject_lookup: dict[str, list[dict[str, str]]] = {}
+    subject_lookup: dict[str, list[SliceIndexRecord]] = {}
     for record in test_records:
-        subject_lookup.setdefault(record.subject_id, []).append(
-            {
-                "subject_id": record.subject_id,
-                "slice_index": record.slice_index,
-                "t2f_path": record.modality_paths["t2f"],
-            }
-        )
-
-    def _case_triplet(subject_id: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        entries = sorted(subject_lookup[subject_id], key=lambda row: int(row["slice_index"]))
-        center_index = len(entries) // 2
-        slice_index = int(entries[center_index]["slice_index"])
-        image_slice = _normalized_t2f_slice(entries[center_index], dataset_root)
-        pred_volume = np.zeros((240, 240, 155), dtype=np.uint8)
-        target_volume = np.zeros((240, 240, 155), dtype=np.uint8)
-        return image_slice, target_volume[:, :, slice_index], pred_volume[:, :, slice_index]
+        subject_lookup.setdefault(record.subject_id, []).append(record)
 
     review_grid = build_review_grid(
         evaluation_dir / "review_grid.png",
-        good_case=_case_triplet(best_case.subject_id),
-        median_case=_case_triplet(median_case.subject_id),
-        poor_case=_case_triplet(worst_case.subject_id),
+        good_case=_predict_subject_triplet(
+            model=model,
+            subject_records=subject_lookup[best_case.subject_id],
+            modalities=modalities,
+            dataset_root=dataset_root,
+            device=device,
+            threshold=float(selection["threshold"]),
+            batch_size=int(config["training"]["batch_size"]),
+        ),
+        median_case=_predict_subject_triplet(
+            model=model,
+            subject_records=subject_lookup[median_case.subject_id],
+            modalities=modalities,
+            dataset_root=dataset_root,
+            device=device,
+            threshold=float(selection["threshold"]),
+            batch_size=int(config["training"]["batch_size"]),
+        ),
+        poor_case=_predict_subject_triplet(
+            model=model,
+            subject_records=subject_lookup[worst_case.subject_id],
+            modalities=modalities,
+            dataset_root=dataset_root,
+            device=device,
+            threshold=float(selection["threshold"]),
+            batch_size=int(config["training"]["batch_size"]),
+        ),
     )
 
     failure_analysis = {
@@ -154,8 +226,8 @@ def main() -> int:
         "mean_recall": summary["mean_recall"],
         "mean_specificity": summary["mean_specificity"],
         "dice_distribution": summary["dice_distribution"],
-        "review_grid": str(review_grid).replace("\\", "/"),
-        "subject_metrics_csv": str(subject_metrics_csv).replace("\\", "/"),
+        "review_grid": _project_relative(review_grid),
+        "subject_metrics_csv": _project_relative(subject_metrics_csv),
     }
     write_json(evaluation_dir / "summary.json", payload)
     print("segmentation_test_summary=")
