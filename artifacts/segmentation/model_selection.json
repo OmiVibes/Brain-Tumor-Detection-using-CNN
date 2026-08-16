@@ -1,0 +1,20 @@
+{
+  "selected_checkpoint": "artifacts/models/segmentation/unet2d_whole_tumor/best.pt",
+  "best_epoch": 9,
+  "validation_metrics": {
+    "subject_dice": 0.884722074469403,
+    "subject_iou": 0.8037340541902028,
+    "slice_dice": 0.5072312764368236
+  },
+  "dataset_fingerprint": "5bc6c1fe8868265cc8df6042ba353891aff6707f9b1acb65c4816c03920314db",
+  "threshold": 0.5,
+  "normalization": "zscore_nonzero_per_modality",
+  "modalities": [
+    "t1c",
+    "t1n",
+    "t2f",
+    "t2w"
+  ],
+  "binary_mask_rule": "mask > 0",
+  "git_commit": "bcd11d8cf122190a89791c5c15651ba1b2ad51aa"
+}

@@ -25,7 +25,7 @@ reproducibility:
 
 training:
   seed: 42
-  batch_size: 4
+  batch_size: 32
   epochs: 30
   learning_rate: 1.0e-4
   weight_decay: 1.0e-4
