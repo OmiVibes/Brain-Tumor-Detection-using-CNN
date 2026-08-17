@@ -11,6 +11,12 @@ def test_unet_outputs_binary_logit_map_shape() -> None:
     assert tuple(outputs.shape) == (2, 1, 240, 240)
 
 
+def test_unet_supports_twelve_channel_2p5d_input() -> None:
+    model = UNet2D(input_channels=12, output_channels=1, base_channels=16)
+    outputs = model(torch.randn(2, 12, 240, 240))
+    assert tuple(outputs.shape) == (2, 1, 240, 240)
+
+
 def test_unet_handles_odd_and_even_spatial_shapes() -> None:
     model = UNet2D(input_channels=4, output_channels=1, base_channels=16)
     outputs = model(torch.randn(1, 4, 241, 239))

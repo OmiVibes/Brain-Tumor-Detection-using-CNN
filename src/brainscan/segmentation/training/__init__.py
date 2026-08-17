@@ -17,7 +17,9 @@ from .train_segmenter import (
     build_scheduler,
     fit_segmenter,
     load_training_history,
+    load_training_state,
     save_training_history,
+    save_training_state,
     train_one_epoch,
 )
 
@@ -33,8 +35,10 @@ __all__ = [
     "evaluate_segmentation_loader",
     "fit_segmenter",
     "load_training_history",
+    "load_training_state",
     "reconstruct_subject_volume",
     "save_training_history",
+    "save_training_state",
     "soft_dice_score",
     "summarize_subject_metrics",
     "thresholded_binary_metrics",

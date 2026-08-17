@@ -1,0 +1,68 @@
+dataset:
+  name: brats_adult_glioma
+  root: data/segmentation/raw/brats2023_glioma
+  version: "2023"
+  modalities:
+    - t1c
+    - t1n
+    - t2f
+    - t2w
+  mask_name: seg
+  split_manifest_dir: data/segmentation/splits
+  slice_index_dir: data/segmentation/slices
+  slice_offsets:
+    - -1
+    - 0
+    - 1
+  neighbor_policy: edge_replicate
+
+segmentation:
+  mode: binary_whole_tumor
+
+model:
+  architecture: unet2p5d
+  input_channels: 12
+  output_channels: 1
+  base_channels: 16
+
+reproducibility:
+  seed: 42
+
+training:
+  seed: 42
+  batch_size: 32
+  epochs: 30
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  num_workers: 0
+  mixed_precision: false
+  early_stopping_patience: 6
+  max_subject_cache_size: 1
+  train_negative_sampling_seed: 42
+
+loss:
+  name: bce_dice
+  bce_weight: 0.5
+  dice_weight: 0.5
+
+sampling:
+  positive_negative_ratio: 1.0
+
+augmentation:
+  horizontal_flip_probability: 0.5
+  max_rotation_degrees: 5.0
+  max_translation_pixels: 4
+
+inference:
+  threshold: 0.5
+
+checkpoint:
+  model_dir: artifacts/models/segmentation/unet2p5d_whole_tumor
+  training_dir: artifacts/segmentation/training/unet2p5d_whole_tumor
+  selection_path: artifacts/segmentation/model_selection_2p5d.json
+  best_filename: best.pt
+  last_filename: last.pt
+  history_json: history.json
+  history_csv: history.csv
+  monitor: val_subject_dice
+  mode: max

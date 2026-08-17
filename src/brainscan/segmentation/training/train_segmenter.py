@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
+import base64
 from collections.abc import Iterable
 from pathlib import Path
+import pickle
+import random
 import csv
 import json
 import subprocess
 import time
 
+import numpy as np
 import torch
 from torch import nn
 from torch.optim import AdamW, Optimizer
@@ -69,8 +73,53 @@ def save_training_state(history_json_path: str | Path, payload: dict[str, object
 def load_training_state(history_json_path: str | Path) -> dict[str, object]:
     resolved = _resolve_training_state_path(history_json_path)
     if not resolved.exists():
-        return {"cumulative_training_duration_seconds": 0.0, "last_completed_epoch": 0}
+        return {
+            "cumulative_training_duration_seconds": 0.0,
+            "last_completed_epoch": 0,
+            "early_stopping": {"best_score": None, "best_epoch": -1, "bad_epochs": 0},
+        }
     return json.loads(resolved.read_text(encoding="utf-8"))
+
+
+def _encode_state(state: object) -> str:
+    return base64.b64encode(pickle.dumps(state)).decode("ascii")
+
+
+def _decode_state(value: str) -> object:
+    return pickle.loads(base64.b64decode(value.encode("ascii")))
+
+
+def capture_random_state(device: torch.device) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "python": _encode_state(random.getstate()),
+        "numpy": _encode_state(np.random.get_state()),
+        "torch_cpu": torch.get_rng_state().tolist(),
+    }
+    if device.type == "cuda" and torch.cuda.is_available():
+        payload["torch_cuda"] = [state.tolist() for state in torch.cuda.get_rng_state_all()]
+    return payload
+
+
+def restore_random_state(payload: dict[str, object] | None, device: torch.device) -> None:
+    if not payload:
+        return
+    python_state = payload.get("python")
+    numpy_state = payload.get("numpy")
+    torch_cpu_state = payload.get("torch_cpu")
+    if isinstance(python_state, str):
+        random.setstate(_decode_state(python_state))
+    if isinstance(numpy_state, str):
+        np.random.set_state(_decode_state(numpy_state))
+    if isinstance(torch_cpu_state, list):
+        torch.set_rng_state(torch.tensor(torch_cpu_state, dtype=torch.uint8))
+    torch_cuda_state = payload.get("torch_cuda")
+    if (
+        device.type == "cuda"
+        and torch.cuda.is_available()
+        and isinstance(torch_cuda_state, list)
+        and torch_cuda_state
+    ):
+        torch.cuda.set_rng_state_all([torch.tensor(state, dtype=torch.uint8) for state in torch_cuda_state])
 
 
 def build_optimizer(model: nn.Module, config: dict[str, object]) -> Optimizer:
@@ -123,12 +172,19 @@ def build_checkpoint_metadata(
         "output_channels": int(config["model"]["output_channels"]),
         "binary_mask_rule": "mask > 0",
         "normalization": "zscore_nonzero_per_modality",
+        "neighbor_policy": str(config["dataset"].get("neighbor_policy", "edge_replicate")),
+        "slice_offsets": list(config["dataset"].get("slice_offsets", [0])),
+        "sampling": {
+            "positive_negative_ratio": float(config["sampling"]["positive_negative_ratio"]),
+            "train_negative_sampling_seed": int(config["training"]["train_negative_sampling_seed"]),
+        },
         "dataset_fingerprint": dataset_fingerprint,
         "subject_split": {
             "train_subjects": train_subject_count,
             "val_subjects": val_subject_count,
         },
         "seed": int(config["training"]["seed"]),
+        "test_used": False,
         "config": _portable_value(config),
         "git_commit": get_git_commit(),
     }
@@ -238,12 +294,39 @@ def fit_segmenter(
         training_state = load_training_state(history_json_resolved)
         cumulative_training_duration_seconds = float(training_state.get("cumulative_training_duration_seconds", 0.0))
         peak_vram_bytes = int(training_state.get("peak_vram_bytes", 0))
-        for history_entry in history:
-            early_stopping.update(float(history_entry[monitor_name]), int(history_entry["epoch"]))
+        early_stopping_state = training_state.get("early_stopping", {})
+        if isinstance(early_stopping_state, dict):
+            early_stopping.best_score = (
+                float(early_stopping_state["best_score"])
+                if early_stopping_state.get("best_score") is not None
+                else None
+            )
+            early_stopping.best_epoch = int(early_stopping_state.get("best_epoch", -1))
+            early_stopping.bad_epochs = int(early_stopping_state.get("bad_epochs", 0))
+        else:
+            for history_entry in history:
+                early_stopping.update(float(history_entry[monitor_name]), int(history_entry["epoch"]))
+        restore_random_state(training_state.get("random_state"), device)
         resumed_from_epoch = int(checkpoint["epoch"])
         print(f"Resuming segmentation training from epoch {resumed_from_epoch + 1} using {last_checkpoint_resolved}.")
 
     start_epoch = resumed_from_epoch + 1 if resumed_from_epoch is not None else 1
+    if start_epoch > max_epochs or early_stopping.bad_epochs >= patience:
+        return {
+            "history": history,
+            "best_epoch": early_stopping.best_epoch,
+            "best_score": early_stopping.best_score,
+            "epochs_completed": len(history),
+            "amp_enabled": amp_enabled,
+            "peak_vram_bytes": peak_vram_bytes,
+            "best_checkpoint_path": resolve_project_path(best_checkpoint_path),
+            "last_checkpoint_path": resolve_project_path(last_checkpoint_path),
+            "history_json_path": resolve_project_path(history_json_path),
+            "history_csv_path": resolve_project_path(history_csv_path),
+            "resumed_from_epoch": resumed_from_epoch,
+            "cumulative_training_duration_seconds": cumulative_training_duration_seconds,
+        }
+
     for epoch in range(start_epoch, max_epochs + 1):
         epoch_start = time.perf_counter()
         if device.type == "cuda":
@@ -289,6 +372,12 @@ def fit_segmenter(
                 "cumulative_training_duration_seconds": cumulative_training_duration_seconds,
                 "last_completed_epoch": epoch,
                 "peak_vram_bytes": peak_vram_bytes,
+                "early_stopping": {
+                    "best_score": early_stopping.best_score,
+                    "best_epoch": early_stopping.best_epoch,
+                    "bad_epochs": early_stopping.bad_epochs,
+                },
+                "random_state": capture_random_state(device),
             },
         )
 
@@ -333,10 +422,16 @@ def fit_segmenter(
                         "slice_dice": float(val_metrics["slice_dice"]),
                     },
                     "dataset_fingerprint": checkpoint_metadata["dataset_fingerprint"],
+                    "architecture": checkpoint_metadata["architecture"],
+                    "input_channels": checkpoint_metadata["input_channels"],
+                    "neighbor_policy": checkpoint_metadata["neighbor_policy"],
+                    "slice_offsets": checkpoint_metadata["slice_offsets"],
                     "threshold": threshold,
                     "normalization": checkpoint_metadata["normalization"],
                     "modalities": checkpoint_metadata["input_modalities"],
                     "binary_mask_rule": checkpoint_metadata["binary_mask_rule"],
+                    "sampling": checkpoint_metadata["sampling"],
+                    "test_used": checkpoint_metadata["test_used"],
                     "git_commit": checkpoint_metadata["git_commit"],
                 },
             )
@@ -349,7 +444,8 @@ def fit_segmenter(
             f"val_slice_dice={float(val_metrics['slice_dice']):.4f} "
             f"val_subject_dice={float(val_metrics['subject_dice']):.4f} "
             f"val_iou={float(val_metrics['subject_iou']):.4f} "
-            f"lr={train_metrics['learning_rate']:.6f}"
+            f"lr={train_metrics['learning_rate']:.6f} "
+            f"test_used=false"
         )
         if should_stop:
             print(f"Early stopping triggered at epoch {epoch}.")

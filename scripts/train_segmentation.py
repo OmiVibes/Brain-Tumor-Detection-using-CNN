@@ -32,7 +32,7 @@ from brainscan.training import resolve_device
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train the BrainScanAI whole-tumor 2D U-Net baseline.")
+    parser = argparse.ArgumentParser(description="Train a BrainScanAI whole-tumor segmentation experiment.")
     parser.add_argument("--config", default="configs/segmentation.yaml")
     parser.add_argument("--smoke-test", action="store_true")
     parser.add_argument("--max-train-batches", type=int, default=None)
@@ -48,17 +48,15 @@ def main() -> int:
     print(f"device={device}")
     print(f"device_info={device_info}")
     if device.type != "cuda" and not args.smoke_test:
-        raise RuntimeError("CUDA is unavailable. Full Phase 3B training must not degrade into a long CPU run.")
+        raise RuntimeError("CUDA is unavailable. Full Phase 3 segmentation training must not degrade into a long CPU run.")
 
     modalities = list(config["dataset"]["modalities"])
     slice_dir = resolve_project_path(config["dataset"]["slice_index_dir"])
     train_records_full = load_slice_index_records(slice_dir / "train.csv", modalities=modalities)
     val_records = load_slice_index_records(slice_dir / "val.csv", modalities=modalities)
-    test_records = load_slice_index_records(slice_dir / "test.csv", modalities=modalities)
     train_subjects = count_split_subjects(train_records_full)["train"]
     val_subjects = count_split_subjects(val_records)["val"]
-    test_subjects = count_split_subjects(test_records)["test"]
-    if train_subjects & val_subjects or train_subjects & test_subjects or val_subjects & test_subjects:
+    if train_subjects & val_subjects:
         raise ValueError("Segmentation subject leakage detected before training.")
 
     train_records = select_training_slice_records(
@@ -82,6 +80,8 @@ def main() -> int:
         augmenter=augmenter,
         max_subject_cache_size=int(config["training"]["max_subject_cache_size"]),
         dataset_root=config["dataset"]["root"],
+        slice_offsets=list(config["dataset"].get("slice_offsets", [0])),
+        neighbor_policy=str(config["dataset"].get("neighbor_policy", "edge_replicate")),
     )
     val_dataset = BraTSSliceDataset(
         records=val_records,
@@ -89,6 +89,8 @@ def main() -> int:
         return_metadata=True,
         max_subject_cache_size=int(config["training"]["max_subject_cache_size"]),
         dataset_root=config["dataset"]["root"],
+        slice_offsets=list(config["dataset"].get("slice_offsets", [0])),
+        neighbor_policy=str(config["dataset"].get("neighbor_policy", "edge_replicate")),
     )
 
     batch_size = int(config["training"]["batch_size"])
@@ -154,10 +156,10 @@ def main() -> int:
         f"train_positive_slices={train_positive} "
         f"train_negative_slices={train_negative} "
         f"val_slices={len(val_records)} "
-        f"test_slices={len(test_records)} "
         f"sample_shape={tuple(sample_inputs.shape)} "
         f"target_shape={tuple(sample_targets.shape)} "
-        f"loader_smoke_seconds={loader_smoke_seconds:.4f}"
+        f"loader_smoke_seconds={loader_smoke_seconds:.4f} "
+        f"test_used=false"
     )
 
     results = fit_segmenter(

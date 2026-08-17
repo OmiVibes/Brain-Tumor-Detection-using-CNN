@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from copy import deepcopy
 from inspect import signature
-import json
 from pathlib import Path
+import json
 
 import torch
 from torch import nn
@@ -56,7 +56,11 @@ class _ValDataset(Dataset):
 
 def _config(tmp_path) -> dict[str, object]:
     return {
-        "dataset": {"modalities": ["t1c", "t1n", "t2f", "t2w"]},
+        "dataset": {
+            "modalities": ["t1c", "t1n", "t2f", "t2w"],
+            "slice_offsets": [0],
+            "neighbor_policy": "edge_replicate",
+        },
         "model": {"architecture": "unet2d", "input_channels": 4, "output_channels": 1},
         "training": {
             "learning_rate": 1e-3,
@@ -65,7 +69,9 @@ def _config(tmp_path) -> dict[str, object]:
             "epochs": 2,
             "early_stopping_patience": 10,
             "seed": 42,
+            "train_negative_sampling_seed": 42,
         },
+        "sampling": {"positive_negative_ratio": 1.0},
         "checkpoint": {"monitor": "val_subject_dice", "mode": "max"},
         "inference": {"threshold": 0.5},
     }
@@ -98,7 +104,19 @@ def test_fit_segmenter_saves_checkpoint_and_selection_artifact(tmp_path) -> None
         scheduler=scheduler,
         device=torch.device("cpu"),
         config=_config(tmp_path),
-        checkpoint_metadata={"dataset_fingerprint": "fp123", "input_modalities": ["t1c", "t1n", "t2f", "t2w"], "normalization": "zscore_nonzero_per_modality", "binary_mask_rule": "mask > 0", "git_commit": "deadbeef"},
+        checkpoint_metadata={
+            "architecture": "unet2d",
+            "input_channels": 4,
+            "dataset_fingerprint": "fp123",
+            "input_modalities": ["t1c", "t1n", "t2f", "t2w"],
+            "normalization": "zscore_nonzero_per_modality",
+            "binary_mask_rule": "mask > 0",
+            "neighbor_policy": "edge_replicate",
+            "slice_offsets": [0],
+            "sampling": {"positive_negative_ratio": 1.0, "train_negative_sampling_seed": 42},
+            "test_used": False,
+            "git_commit": "deadbeef",
+        },
         best_checkpoint_path=tmp_path / "best.pt",
         last_checkpoint_path=tmp_path / "last.pt",
         history_json_path=tmp_path / "history.json",
@@ -125,3 +143,8 @@ def test_fit_segmenter_saves_checkpoint_and_selection_artifact(tmp_path) -> None
 
 def test_segmentation_training_api_does_not_accept_test_loader() -> None:
     assert "test_loader" not in signature(fit_segmenter).parameters
+
+
+def test_phase3c_training_script_does_not_open_test_manifest() -> None:
+    source = Path("scripts/train_segmentation.py").read_text(encoding="utf-8")
+    assert 'slice_dir / "test.csv"' not in source

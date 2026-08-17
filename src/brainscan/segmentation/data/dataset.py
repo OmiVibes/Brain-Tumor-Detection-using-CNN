@@ -1,4 +1,4 @@
-"""Cached multimodal BraTS slice dataset for 2D segmentation."""
+"""Cached multimodal BraTS slice dataset for 2D and 2.5D segmentation."""
 
 from __future__ import annotations
 
@@ -53,6 +53,55 @@ class SubjectVolumeLRUCache:
             self._entries.popitem(last=False)
 
 
+def resolve_neighbor_indices(
+    *,
+    center_index: int,
+    depth: int,
+    slice_offsets: list[int],
+    neighbor_policy: str,
+) -> list[int]:
+    """Resolve slice offsets into in-volume indices without crossing subjects."""
+    if depth <= 0:
+        raise ValueError("depth must be positive.")
+    if not slice_offsets:
+        raise ValueError("slice_offsets must contain at least one offset.")
+
+    resolved_indices: list[int] = []
+    for offset in slice_offsets:
+        candidate = int(center_index) + int(offset)
+        if neighbor_policy == "edge_replicate":
+            candidate = min(max(candidate, 0), depth - 1)
+        else:
+            raise ValueError(f"Unsupported neighbor_policy '{neighbor_policy}'.")
+        resolved_indices.append(candidate)
+    return resolved_indices
+
+
+def extract_slice_context(
+    modalities_volume: np.ndarray,
+    *,
+    center_index: int,
+    slice_offsets: list[int],
+    neighbor_policy: str,
+) -> np.ndarray:
+    """Return [C,H,W] context with modality-major, offset-minor channel ordering."""
+    if modalities_volume.ndim != 4:
+        raise ValueError(
+            f"Expected modalities volume shape [modalities,height,width,depth], got {tuple(modalities_volume.shape)}."
+        )
+    neighbor_indices = resolve_neighbor_indices(
+        center_index=int(center_index),
+        depth=int(modalities_volume.shape[3]),
+        slice_offsets=slice_offsets,
+        neighbor_policy=neighbor_policy,
+    )
+    channels: list[np.ndarray] = []
+    for modality_index in range(int(modalities_volume.shape[0])):
+        for slice_index in neighbor_indices:
+            channels.append(modalities_volume[modality_index, :, :, slice_index])
+    return np.stack(channels, axis=0).astype(np.float32, copy=False)
+
+
 def select_training_slice_records(
     records: list[SliceIndexRecord],
     *,
@@ -93,6 +142,8 @@ class BraTSSliceDataset(Dataset[tuple[Tensor, Tensor] | tuple[Tensor, Tensor, di
         return_metadata: bool = False,
         max_subject_cache_size: int = 1,
         dataset_root: str | Path | None = None,
+        slice_offsets: list[int] | None = None,
+        neighbor_policy: str = "edge_replicate",
     ) -> None:
         if index_path is None and records is None:
             raise ValueError("Either index_path or records must be provided.")
@@ -102,6 +153,8 @@ class BraTSSliceDataset(Dataset[tuple[Tensor, Tensor] | tuple[Tensor, Tensor, di
         self.return_metadata = return_metadata
         self.cache = SubjectVolumeLRUCache(max_size=max_subject_cache_size)
         self.dataset_root = resolve_project_path(dataset_root) if dataset_root is not None else get_project_root()
+        self.slice_offsets = list(slice_offsets) if slice_offsets is not None else [0]
+        self.neighbor_policy = str(neighbor_policy)
 
     def __len__(self) -> int:
         return len(self.records)
@@ -138,7 +191,13 @@ class BraTSSliceDataset(Dataset[tuple[Tensor, Tensor] | tuple[Tensor, Tensor, di
         record = self.records[index]
         subject = self._load_subject(record)
         slice_index = int(record.slice_index)
-        image = torch.from_numpy(subject.modalities[:, :, :, slice_index].copy()).to(dtype=torch.float32)
+        image_array = extract_slice_context(
+            subject.modalities,
+            center_index=slice_index,
+            slice_offsets=self.slice_offsets,
+            neighbor_policy=self.neighbor_policy,
+        )
+        image = torch.from_numpy(image_array.copy()).to(dtype=torch.float32)
         mask = torch.from_numpy(subject.binary_mask[:, :, slice_index].copy()).unsqueeze(0).to(dtype=torch.float32)
 
         if self.augmenter is not None:
@@ -155,5 +214,7 @@ class BraTSSliceDataset(Dataset[tuple[Tensor, Tensor] | tuple[Tensor, Tensor, di
             "tumor_pixel_count": int(record.tumor_pixel_count),
             "mask_path": record.mask_path,
             "modality_paths": dict(record.modality_paths),
+            "slice_offsets": list(self.slice_offsets),
+            "neighbor_policy": self.neighbor_policy,
         }
         return image, mask, metadata
