@@ -30,7 +30,7 @@ def zscore_normalize_nonzero(volume: np.ndarray) -> np.ndarray:
 
 def build_binary_mask(mask_volume: np.ndarray) -> np.ndarray:
     """Derive the whole-tumor target at runtime without mutating source labels."""
-    return (mask_volume > 0).astype(np.float32, copy=False)
+    return (mask_volume > 0).astype(np.uint8, copy=False)
 
 
 def stack_modalities(modality_volumes: list[np.ndarray]) -> np.ndarray:
