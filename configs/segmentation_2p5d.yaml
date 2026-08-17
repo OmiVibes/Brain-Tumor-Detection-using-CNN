@@ -10,6 +10,7 @@ dataset:
   mask_name: seg
   split_manifest_dir: data/segmentation/splits
   slice_index_dir: data/segmentation/slices
+  normalization_stats_path: artifacts/segmentation/normalization_stats/subject_modality_stats.json
   slice_offsets:
     - -1
     - 0
@@ -30,15 +31,18 @@ reproducibility:
 
 training:
   seed: 42
-  batch_size: 32
+  batch_size: 8
   epochs: 30
   learning_rate: 1.0e-4
   weight_decay: 1.0e-4
   num_workers: 0
+  pin_memory: false
   mixed_precision: false
   early_stopping_patience: 6
   max_subject_cache_size: 1
   train_negative_sampling_seed: 42
+  log_every_batches: 100
+  checkpoint_every_batches: 500
 
 loss:
   name: bce_dice

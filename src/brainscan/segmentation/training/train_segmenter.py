@@ -20,6 +20,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from brainscan.core.config import make_project_relative_path, resolve_project_path
+from brainscan.core.system_metrics import capture_memory_snapshot
 from brainscan.segmentation.training.evaluation import evaluate_segmentation_loader, write_json
 from brainscan.training import EarlyStoppingMonitor, load_checkpoint, resolve_amp_enabled, save_checkpoint
 
@@ -30,6 +31,11 @@ HistoryEntry = dict[str, float | int]
 def _resolve_training_state_path(history_json_path: str | Path) -> Path:
     resolved_history = resolve_project_path(history_json_path)
     return resolved_history.with_name("training_state.json")
+
+
+def _resolve_recovery_path(history_json_path: str | Path) -> Path:
+    resolved_history = resolve_project_path(history_json_path)
+    return resolved_history.with_name("recovery.pt")
 
 
 def save_training_history(
@@ -79,6 +85,70 @@ def load_training_state(history_json_path: str | Path) -> dict[str, object]:
             "early_stopping": {"best_score": None, "best_epoch": -1, "bad_epochs": 0},
         }
     return json.loads(resolved.read_text(encoding="utf-8"))
+
+
+def _load_checkpoint_payload(
+    checkpoint_path: str | Path,
+    *,
+    map_location: str | torch.device = "cpu",
+) -> dict[str, object]:
+    resolved_path = resolve_project_path(checkpoint_path)
+    return torch.load(resolved_path, map_location=map_location, weights_only=False)
+
+
+def save_recovery_checkpoint(
+    recovery_path: str | Path,
+    *,
+    model: nn.Module,
+    optimizer: Optimizer,
+    scheduler,
+    epoch: int,
+    next_batch_index: int,
+    history: list[HistoryEntry],
+    best_score: float | None,
+    best_epoch: int,
+    bad_epochs: int,
+    cumulative_training_duration_seconds: float,
+    peak_vram_bytes: int,
+    epoch_random_state: dict[str, object],
+    metadata: dict[str, object],
+) -> Path:
+    resolved_path = resolve_project_path(recovery_path)
+    resolved_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "scheduler_state_dict": scheduler.state_dict() if scheduler is not None else None,
+        "epoch": int(epoch),
+        "next_batch_index": int(next_batch_index),
+        "history": history,
+        "best_score": None if best_score is None else float(best_score),
+        "best_epoch": int(best_epoch),
+        "bad_epochs": int(bad_epochs),
+        "cumulative_training_duration_seconds": float(cumulative_training_duration_seconds),
+        "peak_vram_bytes": int(peak_vram_bytes),
+        "epoch_random_state": epoch_random_state,
+        "metadata": metadata,
+    }
+    torch.save(payload, resolved_path)
+    return resolved_path
+
+
+def load_recovery_checkpoint(
+    recovery_path: str | Path,
+    model: nn.Module,
+    *,
+    optimizer: Optimizer,
+    scheduler,
+    map_location: str | torch.device,
+) -> dict[str, object]:
+    resolved_path = resolve_project_path(recovery_path)
+    checkpoint = _load_checkpoint_payload(resolved_path, map_location=map_location)
+    model.load_state_dict(checkpoint["model_state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    if scheduler is not None and checkpoint.get("scheduler_state_dict") is not None:
+        scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+    return checkpoint
 
 
 def _encode_state(state: object) -> str:
@@ -158,6 +228,25 @@ def _portable_value(value):
     return value
 
 
+def _portable_path(path_value: str | Path, *, relative_to: str | Path | None = None) -> str:
+    resolved = resolve_project_path(path_value)
+    try:
+        return make_project_relative_path(resolved)
+    except ValueError:
+        if relative_to is not None:
+            base_path = resolve_project_path(relative_to)
+            if base_path.suffix:
+                base_path = base_path.parent
+            try:
+                return str(resolved.relative_to(base_path)).replace("\\", "/")
+            except ValueError:
+                try:
+                    return str(Path(resolved).relative_to(base_path)).replace("\\", "/")
+                except ValueError:
+                    return str(Path(resolved).relative_to(base_path.anchor)).replace("\\", "/")
+        return str(resolved).replace("\\", "/")
+
+
 def build_checkpoint_metadata(
     *,
     config: dict[str, object],
@@ -184,6 +273,7 @@ def build_checkpoint_metadata(
             "val_subjects": val_subject_count,
         },
         "seed": int(config["training"]["seed"]),
+        "run_type": "full_training",
         "test_used": False,
         "config": _portable_value(config),
         "git_commit": get_git_commit(),
@@ -203,7 +293,21 @@ def train_one_epoch(
     device: torch.device,
     amp_enabled: bool,
     threshold: float,
+    epoch_index: int,
+    start_batch_index: int = 0,
     max_batches: int | None = None,
+    log_every_batches: int | None = None,
+    checkpoint_every_batches: int | None = None,
+    recovery_path: str | Path | None = None,
+    history: list[HistoryEntry] | None = None,
+    best_score: float | None = None,
+    best_epoch: int = -1,
+    bad_epochs: int = 0,
+    cumulative_training_duration_seconds: float = 0.0,
+    peak_vram_bytes: int = 0,
+    checkpoint_metadata: dict[str, object] | None = None,
+    scheduler=None,
+    epoch_random_state: dict[str, object] | None = None,
 ) -> dict[str, float]:
     model.train()
     scaler = torch.amp.GradScaler(device="cuda", enabled=amp_enabled)
@@ -211,9 +315,13 @@ def train_one_epoch(
     batch_count = 0
     dice_values: list[float] = []
     max_memory_bytes = 0
+    start_time = time.perf_counter()
+    total_batches = len(loader)
     for batch_index, batch in enumerate(loader):
         if max_batches is not None and batch_index >= max_batches:
             break
+        if batch_index < start_batch_index:
+            continue
         inputs, targets = batch[:2]
         inputs = inputs.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
@@ -235,6 +343,42 @@ def train_one_epoch(
         batch_count += int(inputs.shape[0])
         if device.type == "cuda":
             max_memory_bytes = max(max_memory_bytes, int(torch.cuda.max_memory_allocated(device)))
+        completed_batches = batch_index + 1
+        if log_every_batches and completed_batches % int(log_every_batches) == 0:
+            snapshot = capture_memory_snapshot(device)
+            print(
+                f"[seg epoch {epoch_index:02d} batch {completed_batches}/{total_batches}] "
+                f"loss={float(loss.item()):.4f} "
+                f"elapsed_seconds={time.perf_counter() - start_time:.1f} "
+                f"gpu_allocated_mb={snapshot.cuda_allocated_mb} "
+                f"gpu_reserved_mb={snapshot.cuda_reserved_mb} "
+                f"process_rss_mb={snapshot.process_rss_mb} "
+                f"process_private_mb={snapshot.process_private_mb}"
+            )
+        if (
+            checkpoint_every_batches
+            and recovery_path is not None
+            and completed_batches % int(checkpoint_every_batches) == 0
+            and history is not None
+            and checkpoint_metadata is not None
+            and epoch_random_state is not None
+        ):
+            save_recovery_checkpoint(
+                recovery_path,
+                model=model,
+                optimizer=optimizer,
+                scheduler=scheduler,
+                epoch=epoch_index,
+                next_batch_index=completed_batches,
+                history=history,
+                best_score=best_score,
+                best_epoch=best_epoch,
+                bad_epochs=bad_epochs,
+                cumulative_training_duration_seconds=cumulative_training_duration_seconds,
+                peak_vram_bytes=max(peak_vram_bytes, max_memory_bytes),
+                epoch_random_state=epoch_random_state,
+                metadata=checkpoint_metadata,
+            )
     return {
         "loss": float(total_loss / max(batch_count, 1)),
         "dice": _mean(dice_values),
@@ -277,8 +421,27 @@ def fit_segmenter(
     best_checkpoint_resolved = resolve_project_path(best_checkpoint_path)
     last_checkpoint_resolved = resolve_project_path(last_checkpoint_path)
     history_json_resolved = resolve_project_path(history_json_path)
+    recovery_checkpoint_resolved = _resolve_recovery_path(history_json_path)
+    log_every_batches = int(config["training"].get("log_every_batches", 0) or 0)
+    checkpoint_every_batches = int(config["training"].get("checkpoint_every_batches", 0) or 0)
+    requested_run_type = str(checkpoint_metadata.get("run_type", "full_training"))
+    start_batch_index = 0
+
+    if recovery_checkpoint_resolved.exists():
+        recovery_payload = _load_checkpoint_payload(recovery_checkpoint_resolved, map_location=device)
+        recovery_run_type = str(recovery_payload.get("metadata", {}).get("run_type", "unknown"))
+        if recovery_run_type != requested_run_type:
+            raise ValueError(
+                "Found segmentation recovery checkpoint from a different run type; refusing automatic resume."
+            )
 
     if last_checkpoint_resolved.exists() and history_json_resolved.exists():
+        last_payload = _load_checkpoint_payload(last_checkpoint_resolved, map_location=device)
+        last_run_type = str(last_payload.get("metadata", {}).get("run_type", "unknown"))
+        if last_run_type != requested_run_type:
+            raise ValueError(
+                "Found segmentation checkpoint artifacts that are not marked for this run type; refusing resume."
+            )
         checkpoint = load_checkpoint(
             last_checkpoint_resolved,
             model,
@@ -310,6 +473,34 @@ def fit_segmenter(
         resumed_from_epoch = int(checkpoint["epoch"])
         print(f"Resuming segmentation training from epoch {resumed_from_epoch + 1} using {last_checkpoint_resolved}.")
 
+    if recovery_checkpoint_resolved.exists():
+        recovery_checkpoint = load_recovery_checkpoint(
+            recovery_checkpoint_resolved,
+            model,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            map_location=device,
+        )
+        history = list(recovery_checkpoint.get("history", history))
+        cumulative_training_duration_seconds = float(
+            recovery_checkpoint.get("cumulative_training_duration_seconds", cumulative_training_duration_seconds)
+        )
+        peak_vram_bytes = int(recovery_checkpoint.get("peak_vram_bytes", peak_vram_bytes))
+        early_stopping.best_score = (
+            float(recovery_checkpoint["best_score"])
+            if recovery_checkpoint.get("best_score") is not None
+            else early_stopping.best_score
+        )
+        early_stopping.best_epoch = int(recovery_checkpoint.get("best_epoch", early_stopping.best_epoch))
+        early_stopping.bad_epochs = int(recovery_checkpoint.get("bad_epochs", early_stopping.bad_epochs))
+        resumed_from_epoch = int(recovery_checkpoint["epoch"]) - 1
+        start_batch_index = int(recovery_checkpoint.get("next_batch_index", 0))
+        restore_random_state(recovery_checkpoint.get("epoch_random_state"), device)
+        print(
+            f"Resuming segmentation epoch {int(recovery_checkpoint['epoch'])} "
+            f"from batch {start_batch_index} using {recovery_checkpoint_resolved}."
+        )
+
     start_epoch = resumed_from_epoch + 1 if resumed_from_epoch is not None else 1
     if start_epoch > max_epochs or early_stopping.bad_epochs >= patience:
         return {
@@ -329,6 +520,7 @@ def fit_segmenter(
 
     for epoch in range(start_epoch, max_epochs + 1):
         epoch_start = time.perf_counter()
+        epoch_random_state = capture_random_state(device)
         if device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(device)
         train_metrics = train_one_epoch(
@@ -339,8 +531,23 @@ def fit_segmenter(
             device=device,
             amp_enabled=amp_enabled,
             threshold=threshold,
+            epoch_index=epoch,
+            start_batch_index=start_batch_index if epoch == start_epoch else 0,
             max_batches=max_train_batches,
+            log_every_batches=log_every_batches,
+            checkpoint_every_batches=checkpoint_every_batches,
+            recovery_path=recovery_checkpoint_resolved,
+            history=history,
+            best_score=early_stopping.best_score,
+            best_epoch=early_stopping.best_epoch,
+            bad_epochs=early_stopping.bad_epochs,
+            cumulative_training_duration_seconds=cumulative_training_duration_seconds,
+            peak_vram_bytes=peak_vram_bytes,
+            checkpoint_metadata=checkpoint_metadata,
+            scheduler=scheduler,
+            epoch_random_state=epoch_random_state,
         )
+        start_batch_index = 0
         val_metrics = evaluate_segmentation_loader(
             model,
             val_loader,
@@ -380,6 +587,8 @@ def fit_segmenter(
                 "random_state": capture_random_state(device),
             },
         )
+        if recovery_checkpoint_resolved.exists():
+            recovery_checkpoint_resolved.unlink()
 
         current_score = float(history_entry[monitor_name])
         improved, should_stop = early_stopping.update(current_score, epoch)
@@ -414,7 +623,10 @@ def fit_segmenter(
             write_json(
                 model_selection_path,
                 {
-                    "selected_checkpoint": make_project_relative_path(best_checkpoint_path),
+                    "selected_checkpoint": _portable_path(
+                        best_checkpoint_path,
+                        relative_to=model_selection_path,
+                    ),
                     "best_epoch": epoch,
                     "validation_metrics": {
                         "subject_dice": float(val_metrics["subject_dice"]),

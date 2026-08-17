@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import numpy as np
 import torch
@@ -11,19 +12,78 @@ from torchvision.transforms import InterpolationMode
 from torchvision.transforms import functional as tvf
 
 
+@dataclass(frozen=True)
+class VolumeNormalizationStats:
+    mean_nonzero: float
+    std_nonzero: float
+    nonzero_count: int
+
+
+def compute_nonzero_stats(values: np.ndarray) -> VolumeNormalizationStats:
+    """Compute stable non-zero z-score stats for a volume or slice."""
+    nonzero = values != 0
+    nonzero_count = int(np.count_nonzero(nonzero))
+    if nonzero_count == 0:
+        return VolumeNormalizationStats(mean_nonzero=0.0, std_nonzero=1.0, nonzero_count=0)
+
+    selected = values[nonzero].astype(np.float64, copy=False)
+    mean = float(selected.mean())
+    std = float(selected.std())
+    if std <= 1e-8:
+        std = 1.0
+    return VolumeNormalizationStats(mean_nonzero=mean, std_nonzero=std, nonzero_count=nonzero_count)
+
+
+def accumulate_nonzero_stats(
+    *,
+    count: int,
+    total: float,
+    total_squares: float,
+    values: np.ndarray,
+) -> tuple[int, float, float]:
+    """Incrementally accumulate non-zero statistics without retaining full volumes."""
+    nonzero = values != 0
+    if not np.any(nonzero):
+        return count, total, total_squares
+    selected = values[nonzero].astype(np.float64, copy=False)
+    return (
+        count + int(selected.size),
+        total + float(selected.sum(dtype=np.float64)),
+        total_squares + float(np.square(selected, dtype=np.float64).sum(dtype=np.float64)),
+    )
+
+
+def finalize_nonzero_stats(*, count: int, total: float, total_squares: float) -> VolumeNormalizationStats:
+    """Finalize incremental non-zero stats into portable mean/std metadata."""
+    if count <= 0:
+        return VolumeNormalizationStats(mean_nonzero=0.0, std_nonzero=1.0, nonzero_count=0)
+    mean = total / float(count)
+    variance = max((total_squares / float(count)) - (mean * mean), 0.0)
+    std = math.sqrt(variance)
+    if std <= 1e-8:
+        std = 1.0
+    return VolumeNormalizationStats(mean_nonzero=float(mean), std_nonzero=float(std), nonzero_count=int(count))
+
+
+def normalize_nonzero_slice(slice_array: np.ndarray, stats: VolumeNormalizationStats) -> np.ndarray:
+    """Apply volume-level non-zero z-score stats to one 2D slice."""
+    array = np.asarray(slice_array, dtype=np.float32)
+    normalized = np.zeros_like(array, dtype=np.float32)
+    nonzero = array != 0
+    if not np.any(nonzero):
+        return normalized
+    normalized[nonzero] = (array[nonzero] - float(stats.mean_nonzero)) / float(stats.std_nonzero)
+    return normalized
+
+
 def zscore_normalize_nonzero(volume: np.ndarray) -> np.ndarray:
     """Normalize one MRI modality using non-zero voxels only."""
-    array = volume.astype(np.float32, copy=True)
+    stats = compute_nonzero_stats(np.asarray(volume))
+    array = np.asarray(volume, dtype=np.float32).copy()
     nonzero = array != 0
     if not np.any(nonzero):
         return np.zeros_like(array, dtype=np.float32)
-
-    values = array[nonzero]
-    mean = float(values.mean())
-    std = float(values.std())
-    if std <= 1e-8:
-        std = 1.0
-    array[nonzero] = (array[nonzero] - mean) / std
+    array[nonzero] = (array[nonzero] - float(stats.mean_nonzero)) / float(stats.std_nonzero)
     array[~nonzero] = 0.0
     return array
 

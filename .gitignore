@@ -42,3 +42,5 @@ artifacts/explainability/**/overlay/
 artifacts/explainability/**/metadata/
 artifacts/robustness/**/ood_reference.npz
 artifacts/segmentation/data_audit/tmp/
+artifacts/segmentation/normalization_stats/
+artifacts/segmentation/profiling/

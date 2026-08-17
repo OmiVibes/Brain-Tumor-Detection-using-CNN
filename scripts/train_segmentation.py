@@ -15,9 +15,13 @@ SRC_PATH = PROJECT_ROOT / "src"
 if str(SRC_PATH) not in sys.path:
     sys.path.insert(0, str(SRC_PATH))
 
-from brainscan.core.config import load_segmentation_config, resolve_project_path
+from brainscan.core.config import load_segmentation_config, make_project_relative_path, resolve_project_path
 from brainscan.core.reproducibility import make_torch_generator, seed_worker, set_global_seed
-from brainscan.segmentation.data.dataset import BraTSSliceDataset, select_training_slice_records
+from brainscan.segmentation.data.dataset import (
+    BraTSSliceDataset,
+    load_normalization_stats_map,
+    select_training_slice_records,
+)
 from brainscan.segmentation.data.preprocessing import SegmentationAugmentationConfig, SegmentationAugmenter
 from brainscan.segmentation.data.slice_index import count_split_subjects, load_slice_index_records
 from brainscan.segmentation.models import UNet2D, count_parameters
@@ -38,6 +42,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-train-batches", type=int, default=None)
     parser.add_argument("--max-val-batches", type=int, default=None)
     return parser.parse_args()
+
+
+def _smoke_runtime_paths(config: dict[str, object]) -> tuple[Path, Path, Path]:
+    checkpoint_config = config["checkpoint"]
+    model_dir = Path(checkpoint_config["model_dir"]) / "smoke"
+    training_dir = Path(checkpoint_config["training_dir"]) / "smoke"
+    selection_path = training_dir / "model_selection_smoke.json"
+    return model_dir, training_dir, selection_path
 
 
 def main() -> int:
@@ -74,6 +86,11 @@ def main() -> int:
             max_translation_pixels=int(config["augmentation"]["max_translation_pixels"]),
         )
     )
+    normalization_stats_path = config["dataset"].get(
+        "normalization_stats_path",
+        "artifacts/segmentation/normalization_stats/subject_modality_stats.json",
+    )
+    normalization_stats = load_normalization_stats_map(normalization_stats_path)
     train_dataset = BraTSSliceDataset(
         records=train_records,
         modalities=modalities,
@@ -82,6 +99,7 @@ def main() -> int:
         dataset_root=config["dataset"]["root"],
         slice_offsets=list(config["dataset"].get("slice_offsets", [0])),
         neighbor_policy=str(config["dataset"].get("neighbor_policy", "edge_replicate")),
+        normalization_stats=normalization_stats,
     )
     val_dataset = BraTSSliceDataset(
         records=val_records,
@@ -91,16 +109,18 @@ def main() -> int:
         dataset_root=config["dataset"]["root"],
         slice_offsets=list(config["dataset"].get("slice_offsets", [0])),
         neighbor_policy=str(config["dataset"].get("neighbor_policy", "edge_replicate")),
+        normalization_stats=normalization_stats,
     )
 
     batch_size = int(config["training"]["batch_size"])
     num_workers = int(config["training"]["num_workers"])
+    pin_memory = bool(config["training"].get("pin_memory", False)) and device.type == "cuda"
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=(device.type == "cuda"),
+        pin_memory=pin_memory,
         worker_init_fn=seed_worker if num_workers > 0 else None,
         generator=make_torch_generator(int(config["training"]["seed"])),
     )
@@ -109,7 +129,7 @@ def main() -> int:
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
-        pin_memory=(device.type == "cuda"),
+        pin_memory=pin_memory,
         worker_init_fn=seed_worker if num_workers > 0 else None,
     )
 
@@ -132,13 +152,22 @@ def main() -> int:
         train_subject_count=len(train_subjects),
         val_subject_count=len(val_subjects),
     )
+    checkpoint_metadata["run_type"] = "smoke_test" if args.smoke_test else "full_training"
+    checkpoint_metadata["normalization_stats_path"] = make_project_relative_path(
+        resolve_project_path(normalization_stats_path)
+    )
 
     checkpoint_config = config["checkpoint"]
-    best_checkpoint_path = Path(checkpoint_config["model_dir"]) / str(checkpoint_config["best_filename"])
-    last_checkpoint_path = Path(checkpoint_config["model_dir"]) / str(checkpoint_config["last_filename"])
-    history_json_path = Path(checkpoint_config["training_dir"]) / str(checkpoint_config["history_json"])
-    history_csv_path = Path(checkpoint_config["training_dir"]) / str(checkpoint_config["history_csv"])
-    model_selection_path = Path(checkpoint_config["selection_path"])
+    if args.smoke_test:
+        model_dir, training_dir, model_selection_path = _smoke_runtime_paths(config)
+    else:
+        model_dir = Path(checkpoint_config["model_dir"])
+        training_dir = Path(checkpoint_config["training_dir"])
+        model_selection_path = Path(checkpoint_config["selection_path"])
+    best_checkpoint_path = model_dir / str(checkpoint_config["best_filename"])
+    last_checkpoint_path = model_dir / str(checkpoint_config["last_filename"])
+    history_json_path = training_dir / str(checkpoint_config["history_json"])
+    history_csv_path = training_dir / str(checkpoint_config["history_csv"])
 
     if args.smoke_test:
         config["training"]["epochs"] = min(int(config["training"]["epochs"]), 2)
