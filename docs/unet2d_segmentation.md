@@ -145,6 +145,8 @@ Frozen best validation checkpoint:
 - best validation IoU: `0.8037340541902028`
 - validation slice Dice at best epoch: `0.5072312764368236`
 
+Training did not stop because early stopping triggered. The full baseline run terminated after epoch `9` because repeated execution/runtime limits interrupted the longer run, and epoch `9` was then frozen as the best validation checkpoint among the completed epochs.
+
 Training history artifacts:
 
 - `artifacts/segmentation/training/unet2d_whole_tumor/history.json`

@@ -685,6 +685,8 @@ Frozen validation-selected checkpoint:
 - best validation subject Dice: `0.8847`
 - best validation IoU: `0.8037`
 
+The segmentation run did not finish by early stopping. Training was interrupted after epoch `9` by execution/runtime limits, and epoch `9` was frozen as the best validation checkpoint among completed epochs.
+
 Formal held-out test results on `188` BraTS test subjects:
 
 - mean Dice: `0.8762`
